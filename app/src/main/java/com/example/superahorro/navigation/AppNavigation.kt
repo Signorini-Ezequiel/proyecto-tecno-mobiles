@@ -22,6 +22,7 @@ import com.example.superahorro.ui.screens.ProfileScreen
 import com.example.superahorro.ui.screens.PurchaseDetailScreen
 import com.example.superahorro.ui.screens.PurchaseListScreen
 import com.example.superahorro.ui.screens.RegisterScreen
+import com.example.superahorro.ui.screens.PasswordChangeScreen
 import com.example.superahorro.ui.screens.SettingsScreen
 import com.example.superahorro.ui.screens.SplashScreen
 import com.example.superahorro.ui.screens.StatsScreen
@@ -35,7 +36,12 @@ fun AppNavigation() {
     val authViewModel: AuthViewModel = viewModel()
     val backStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry.value?.destination?.route
-    val showBottomBar = bottomNavItems.any { it.route == currentRoute }
+    val showBottomBar = currentRoute !in listOf(
+        AppRoutes.Splash.route,
+        AppRoutes.Landing.route,
+        AppRoutes.Login.route,
+        AppRoutes.Register.route
+    )
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -79,10 +85,7 @@ fun AppNavigation() {
                 )
             }
             composable(AppRoutes.Home.route) {
-                HomeScreen(
-                    navController = navController,
-                    purchases = purchaseViewModel.purchases
-                )
+                HomeScreen(navController = navController)
             }
             composable(AppRoutes.NewPurchase.route) {
                 NewPurchaseScreen(navController = navController)
@@ -91,10 +94,7 @@ fun AppNavigation() {
                 NewProductScreen(navController = navController)
             }
             composable(AppRoutes.PurchaseList.route) {
-                PurchaseListScreen(
-                    navController = navController,
-                    purchases = purchaseViewModel.purchases
-                )
+                PurchaseListScreen(navController = navController)
             }
             composable(
                 route = AppRoutes.PurchaseDetail.route,
@@ -107,15 +107,10 @@ fun AppNavigation() {
                 )
             }
             composable(AppRoutes.History.route) {
-                HistoryScreen(
-                    navController = navController,
-                    purchases = purchaseViewModel.purchases
-                )
+                HistoryScreen(navController = navController)
             }
             composable(AppRoutes.Stats.route) {
-                StatsScreen(
-                    purchases = purchaseViewModel.purchases
-                )
+                StatsScreen()
             }
             composable(AppRoutes.Profile.route) {
                 ProfileScreen(
@@ -123,10 +118,15 @@ fun AppNavigation() {
                     email = authViewModel.userEmail,
                     username = authViewModel.username,
                     onUsernameChange = { username -> authViewModel.updateUsername(username) },
+                    onLogout = { authViewModel.logout() }
+                )
+            }
+            composable(AppRoutes.PasswordChange.route) {
+                PasswordChangeScreen(
+                    navController = navController,
                     onPasswordChange = { currentPassword, newPassword ->
                         authViewModel.changePassword(currentPassword, newPassword)
-                    },
-                    onLogout = { authViewModel.logout() }
+                    }
                 )
             }
             composable(AppRoutes.Settings.route) {

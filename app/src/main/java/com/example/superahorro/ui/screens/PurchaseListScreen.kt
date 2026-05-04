@@ -18,15 +18,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.superahorro.data.Purchase
 import com.example.superahorro.navigation.AppRoutes
+import com.example.superahorro.viewmodel.PurchaseViewModel
 
 @Composable
 fun PurchaseListScreen(
     navController: NavController,
-    purchases: List<Purchase>
+    purchaseViewModel: PurchaseViewModel = viewModel()
 ) {
+    val purchases by purchaseViewModel.purchases.collectAsState()
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->

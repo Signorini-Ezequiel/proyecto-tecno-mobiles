@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.superahorro.navigation.AppRoutes
@@ -48,17 +47,12 @@ fun ProfileScreen(
     email: String,
     username: String,
     onUsernameChange: (String) -> AuthResult,
-    onPasswordChange: (String, String) -> AuthResult,
     onLogout: () -> Unit
 ) {
     var isEditingUsername by remember { mutableStateOf(false) }
     var usernameInput by remember(username) { mutableStateOf(username) }
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
     var usernameMessage by remember { mutableStateOf<String?>(null) }
-    var passwordMessage by remember { mutableStateOf<String?>(null) }
     var usernameIsError by remember { mutableStateOf(false) }
-    var passwordIsError by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -190,7 +184,7 @@ fun ProfileScreen(
                         )
                     }
 
-                    Text(
+                            Text(
                         text = email,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -210,64 +204,19 @@ fun ProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Cambiar contrasena",
+                        text = "Seguridad",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = currentPassword,
-                        onValueChange = {
-                            currentPassword = it
-                            passwordMessage = null
-                        },
-                        label = { Text("Contrasena actual") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = profileTextFieldColors()
+                    Text(
+                        text = "El cambio de contraseña se realiza en una pantalla separada para mayor seguridad.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = newPassword,
-                        onValueChange = {
-                            newPassword = it
-                            passwordMessage = null
-                        },
-                        label = { Text("Nueva contrasena") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = profileTextFieldColors()
-                    )
-                    passwordMessage?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (passwordIsError) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            }
-                        )
-                    }
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            when (val result = onPasswordChange(currentPassword, newPassword)) {
-                                AuthResult.Success -> {
-                                    currentPassword = ""
-                                    newPassword = ""
-                                    passwordIsError = false
-                                    passwordMessage = "Contrasena actualizada."
-                                }
-                                is AuthResult.Error -> {
-                                    passwordIsError = true
-                                    passwordMessage = result.message
-                                }
-                            }
-                        },
+                        onClick = { navController.navigate(AppRoutes.PasswordChange.route) },
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -276,11 +225,11 @@ fun ProfileScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Key,
-                            contentDescription = "Cambiar contrasena"
+                            contentDescription = "Ir a cambiar contraseña"
                         )
                         Text(
                             modifier = Modifier.padding(start = 8.dp),
-                            text = "Cambiar contrasena"
+                            text = "Cambiar contraseña"
                         )
                     }
                 }

@@ -15,5 +15,6 @@ sealed class AppRoutes(val route: String) {
     data object History : AppRoutes("history")
     data object Stats : AppRoutes("stats")
     data object Profile : AppRoutes("profile")
+    data object PasswordChange : AppRoutes("password_change")
     data object Settings : AppRoutes("settings")
 }

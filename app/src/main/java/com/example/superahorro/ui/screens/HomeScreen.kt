@@ -1,5 +1,6 @@
 package com.example.superahorro.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,15 +24,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.superahorro.data.Purchase
 import com.example.superahorro.navigation.AppRoutes
+import com.example.superahorro.viewmodel.PurchaseViewModel
 
 @Composable
 fun HomeScreen(
     navController: NavController,
-    purchases: List<Purchase>
+    purchaseViewModel: PurchaseViewModel = viewModel()
 ) {
+    val purchases by purchaseViewModel.purchases.collectAsState()
     val totalMonth = purchases.sumOf { it.total }
     val lastPurchase = purchases.firstOrNull()
     val latestPurchases = purchases.take(3)
@@ -109,7 +115,10 @@ fun HomeScreen(
                     Text(
                         text = "Ver todas",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            navController.navigate(AppRoutes.History.route)
+                        }
                     )
                 }
             }

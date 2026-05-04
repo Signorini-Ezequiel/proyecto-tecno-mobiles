@@ -1,6 +1,8 @@
 package com.example.superahorro.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,13 +20,19 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,19 +42,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.superahorro.navigation.AppRoutes
+import com.example.superahorro.viewmodel.PurchaseViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewPurchaseScreen(navController: NavController) {
+fun NewPurchaseScreen(
+    navController: NavController,
+    purchaseViewModel: PurchaseViewModel = viewModel()
+) {
     var marketName by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
-    var total by remember { mutableStateOf("") }
     var showValidation by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
 
     val marketHasError = showValidation && marketName.isBlank()
     val dateHasError = showValidation && date.isBlank()
-    val totalHasError = showValidation && total.isBlank()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -99,42 +116,87 @@ fun NewPurchaseScreen(navController: NavController) {
                         }
                     )
 
-                    PurchaseTextField(
-                        value = date,
-                        onValueChange = { date = it },
-                        label = "Fecha",
-                        placeholder = "Ej: 03/05/2026",
-                        isError = dateHasError,
-                        supportingText = if (dateHasError) "Campo requerido" else "Formato sugerido: dd/mm/aaaa",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.CalendarMonth,
-                                contentDescription = null
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showDatePicker = true }
+                    ) {
+                        OutlinedTextField(
+                            value = date,
+                            onValueChange = { },
+                            label = { Text("Fecha") },
+                            placeholder = { Text("Selecciona una fecha") },
+                            isError = dateHasError,
+                            supportingText = if (dateHasError) {
+                                { Text("Campo requerido") }
+                            } else {
+                                null
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.CalendarMonth,
+                                    contentDescription = "Seleccionar fecha"
+                                )
+                            },
+                            readOnly = true,
+                            enabled = false,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = if (dateHasError) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.outline
+                                },
+                                disabledLabelColor = if (dateHasError) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledSupportingTextColor = MaterialTheme.colorScheme.error,
+                                disabledContainerColor = MaterialTheme.colorScheme.surface
                             )
-                        }
-                    )
+                        )
+                    }
 
-                    PurchaseTextField(
-                        value = total,
-                        onValueChange = { total = it },
-                        label = "Total",
-                        placeholder = "Ej: 18500",
-                        isError = totalHasError,
-                        supportingText = if (totalHasError) "Campo requerido" else null,
-                        keyboardType = KeyboardType.Number,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.AttachMoney,
-                                contentDescription = null
-                            )
+                    if (showDatePicker) {
+                        DatePickerDialog(
+                            onDismissRequest = { showDatePicker = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    datePickerState.selectedDateMillis?.let { millis ->
+                                        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                        date = formatter.format(Date(millis))
+                                    }
+                                    showDatePicker = false
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDatePicker = false }) {
+                                    Text("Cancelar")
+                                }
+                            }
+                        ) {
+                            DatePicker(state = datePickerState)
                         }
-                    )
+                    }
                 }
             }
 
             OutlinedButton(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { navController.navigate(AppRoutes.NewProduct.route) },
+                onClick = {
+                    if (marketName.isNotBlank() && date.isNotBlank()) {
+                        purchaseViewModel.setNewPurchaseDetails(marketName, date)
+                        navController.navigate(AppRoutes.NewProduct.route)
+                    } else {
+                        showValidation = true
+                    }
+                },
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.primary
@@ -147,25 +209,6 @@ fun NewPurchaseScreen(navController: NavController) {
                 Text(
                     modifier = Modifier.padding(start = 8.dp),
                     text = "Agregar productos"
-                )
-            }
-
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { showValidation = true },
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Save,
-                    contentDescription = "Guardar compra"
-                )
-                Text(
-                    modifier = Modifier.padding(start = 8.dp),
-                    text = "Guardar compra"
                 )
             }
 
