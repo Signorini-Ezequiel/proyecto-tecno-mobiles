@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.undef.superahorro.signorini.haron"
+    namespace = "com.undef.superahorro.haronsignorini"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.undef.superahorro.signorini.haron"
+        applicationId = "com.undef.superahorro.haronsignorini"
         minSdk = 29
         targetSdk = 36
         versionCode = 1
