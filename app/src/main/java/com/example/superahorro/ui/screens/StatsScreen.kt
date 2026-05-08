@@ -15,9 +15,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,6 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,15 +48,24 @@ import java.util.Locale
 @Composable
 fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
     val purchases by purchaseViewModel.purchases.collectAsState()
-    val currentMonthPurchases = purchases.filter { it.date.isInCurrentMonth() }
-    val totalSpent = currentMonthPurchases.sumOf { it.total }
-    val spendingByMarket = currentMonthPurchases
+    val availableMonths = purchases
+        .mapNotNull { it.date.toMonthBucketOrNull() }
+        .distinct()
+        .sortedByDescending { it.sortKey }
+    val defaultMonthIndex = availableMonths.indexOfFirst { it.isCurrentMonth() }.takeIf { it >= 0 } ?: 0
+    val selectedMonthIndexState = remember(availableMonths.map { it.sortKey }) {
+        mutableIntStateOf(defaultMonthIndex.coerceIn(0, (availableMonths.lastIndex).coerceAtLeast(0)))
+    }
+    val selectedMonth = availableMonths.getOrNull(selectedMonthIndexState.intValue)
+    val selectedMonthPurchases = purchases.filter { it.date.toMonthBucketOrNull() == selectedMonth }
+    val totalSpent = selectedMonthPurchases.sumOf { it.total }
+    val spendingByMarket = selectedMonthPurchases
         .groupBy { it.marketName }
         .mapValues { entry -> entry.value.sumOf { it.total } }
         .toList()
         .sortedByDescending { it.second }
     val maxMarketSpent = spendingByMarket.maxOfOrNull { it.second } ?: 1.0
-    val currentMonthLabel = currentMonthLabel()
+    val selectedMonthLabel = selectedMonth?.label ?: "Sin datos"
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -70,7 +86,7 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Analisis visual del mes de $currentMonthLabel.",
+                        text = "Analisis visual por mes con datos simulados.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -78,10 +94,28 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
             }
 
             item {
+                MonthSelectorCard(
+                    selectedMonthLabel = selectedMonthLabel,
+                    canGoPrevious = selectedMonthIndexState.intValue < availableMonths.lastIndex,
+                    canGoNext = selectedMonthIndexState.intValue > 0,
+                    onPrevious = {
+                        if (selectedMonthIndexState.intValue < availableMonths.lastIndex) {
+                            selectedMonthIndexState.intValue += 1
+                        }
+                    },
+                    onNext = {
+                        if (selectedMonthIndexState.intValue > 0) {
+                            selectedMonthIndexState.intValue -= 1
+                        }
+                    }
+                )
+            }
+
+            item {
                 TotalSpentCard(
                     totalSpent = totalSpent,
-                    purchasesCount = currentMonthPurchases.size,
-                    currentMonthLabel = currentMonthLabel
+                    purchasesCount = selectedMonthPurchases.size,
+                    currentMonthLabel = selectedMonthLabel
                 )
             }
 
@@ -147,6 +181,66 @@ private fun TotalSpentCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
             )
+        }
+    }
+}
+
+@Composable
+private fun MonthSelectorCard(
+    selectedMonthLabel: String,
+    canGoPrevious: Boolean,
+    canGoNext: Boolean,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onPrevious,
+                enabled = canGoPrevious
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ChevronLeft,
+                    contentDescription = "Mes anterior"
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = "Mes seleccionado",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = selectedMonthLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            IconButton(
+                onClick = onNext,
+                enabled = canGoNext
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ChevronRight,
+                    contentDescription = "Mes siguiente"
+                )
+            }
         }
     }
 }
@@ -328,17 +422,30 @@ private fun formatMoney(amount: Double): String {
     return "${'$'}${amount.toInt()}"
 }
 
-private fun String.isInCurrentMonth(): Boolean {
-    val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    val parsedDate = formatter.parse(this) ?: return false
-    val purchaseCalendar = Calendar.getInstance().apply { time = parsedDate }
-    val currentCalendar = Calendar.getInstance()
-    return purchaseCalendar.get(Calendar.YEAR) == currentCalendar.get(Calendar.YEAR) &&
-        purchaseCalendar.get(Calendar.MONTH) == currentCalendar.get(Calendar.MONTH)
+private data class MonthBucket(
+    val year: Int,
+    val month: Int,
+    val label: String
+) {
+    val sortKey: Int = year * 100 + month
 }
 
-private fun currentMonthLabel(): String {
-    val formatter = SimpleDateFormat("MMMM yyyy", Locale("es", "AR"))
-    return formatter.format(Calendar.getInstance().time)
+private fun MonthBucket.isCurrentMonth(): Boolean {
+    val currentCalendar = Calendar.getInstance()
+    return year == currentCalendar.get(Calendar.YEAR) &&
+        month == currentCalendar.get(Calendar.MONTH) + 1
+}
+
+private fun String.toMonthBucketOrNull(): MonthBucket? {
+    val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val parsedDate = formatter.parse(this) ?: return null
+    val purchaseCalendar = Calendar.getInstance().apply { time = parsedDate }
+    val monthFormatter = SimpleDateFormat("MMMM yyyy", Locale("es", "AR"))
+    val label = monthFormatter.format(parsedDate)
         .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "AR")) else it.toString() }
+    return MonthBucket(
+        year = purchaseCalendar.get(Calendar.YEAR),
+        month = purchaseCalendar.get(Calendar.MONTH) + 1,
+        label = label
+    )
 }
