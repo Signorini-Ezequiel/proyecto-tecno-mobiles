@@ -112,6 +112,16 @@ class SessionManager(context: Context) {
         )
     }
 
+    fun isDarkModeEnabled(): Boolean {
+        return preferences.getBoolean(KEY_DARK_MODE, true)
+    }
+
+    fun setDarkModeEnabled(enabled: Boolean) {
+        preferences.edit()
+            .putBoolean(KEY_DARK_MODE, enabled)
+            .apply()
+    }
+
     private fun ensureDefaultAccounts() {
         val existingAccounts = getAccounts().map { account ->
             val defaultAccount = defaultMockAccounts.firstOrNull {
@@ -143,6 +153,7 @@ class SessionManager(context: Context) {
         const val KEY_IS_LOGGED_IN = "is_logged_in"
         const val KEY_EMAIL = "email"
         const val KEY_ACCOUNTS = "accounts"
+        const val KEY_DARK_MODE = "dark_mode"
         const val ACCOUNT_SEPARATOR = "|"
     }
 }

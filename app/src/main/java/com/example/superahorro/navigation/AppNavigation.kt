@@ -30,7 +30,10 @@ import com.example.superahorro.viewmodel.AuthViewModel
 import com.example.superahorro.viewmodel.PurchaseViewModel
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    darkModeEnabled: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
+) {
     val navController = rememberNavController()
     val purchaseViewModel: PurchaseViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
@@ -169,7 +172,11 @@ fun AppNavigation() {
                 )
             }
             composable(AppRoutes.Settings.route) {
-                SettingsScreen(navController = navController)
+                SettingsScreen(
+                    navController = navController,
+                    darkModeEnabled = darkModeEnabled,
+                    onDarkModeChange = onDarkModeChange
+                )
             }
         }
     }

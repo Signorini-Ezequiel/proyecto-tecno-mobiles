@@ -12,11 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
@@ -72,57 +71,69 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp, vertical = 18.dp)
-                .verticalScroll(rememberScrollState()),
+            ,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "Estadisticas",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Analisis visual por mes con datos simulados.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "Estadisticas",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "Analisis visual por mes con datos simulados.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            item {
+                MonthSelectorCard(
+                    selectedMonthLabel = selectedMonthLabel,
+                    canGoPrevious = selectedMonthIndexState.intValue < availableMonths.lastIndex,
+                    canGoNext = selectedMonthIndexState.intValue > 0,
+                    onPrevious = {
+                        if (selectedMonthIndexState.intValue < availableMonths.lastIndex) {
+                            selectedMonthIndexState.intValue += 1
+                        }
+                    },
+                    onNext = {
+                        if (selectedMonthIndexState.intValue > 0) {
+                            selectedMonthIndexState.intValue -= 1
+                        }
+                    }
                 )
             }
-            MonthSelectorCard(
-                selectedMonthLabel = selectedMonthLabel,
-                canGoPrevious = selectedMonthIndexState.intValue < availableMonths.lastIndex,
-                canGoNext = selectedMonthIndexState.intValue > 0,
-                onPrevious = {
-                    if (selectedMonthIndexState.intValue < availableMonths.lastIndex) {
-                        selectedMonthIndexState.intValue += 1
-                    }
-                },
-                onNext = {
-                    if (selectedMonthIndexState.intValue > 0) {
-                        selectedMonthIndexState.intValue -= 1
-                    }
-                }
-            )
 
-            TotalSpentCard(
-                totalSpent = totalSpent,
-                purchasesCount = selectedMonthPurchases.size,
-                currentMonthLabel = selectedMonthLabel
-            )
+            item {
+                TotalSpentCard(
+                    totalSpent = totalSpent,
+                    purchasesCount = selectedMonthPurchases.size,
+                    currentMonthLabel = selectedMonthLabel
+                )
+            }
 
-            Text(
-                text = "Gasto por supermercado",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            item {
+                Text(
+                    text = "Gasto por supermercado",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
 
-            spendingByMarket.forEach { (market, total) ->
+            items(
+                items = spendingByMarket,
+                key = { it.first }
+            ) { (market, total) ->
                 MarketSpendingRow(
                     market = market,
                     total = total,
@@ -130,10 +141,12 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
                 )
             }
 
-            PieChartCard(
-                spendingByMarket = spendingByMarket,
-                totalSpent = totalSpent
-            )
+            item {
+                PieChartCard(
+                    spendingByMarket = spendingByMarket,
+                    totalSpent = totalSpent
+                )
+            }
         }
     }
 }

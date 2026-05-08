@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -21,10 +19,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,10 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 @Composable
-fun SettingsScreen(navController: NavController) {
-    var darkModeEnabled by remember { mutableStateOf(true) }
-    var notificationsEnabled by remember { mutableStateOf(false) }
-
+fun SettingsScreen(
+    navController: NavController,
+    darkModeEnabled: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
@@ -73,36 +68,12 @@ fun SettingsScreen(navController: NavController) {
                 ) {
                     SettingSwitchRow(
                         title = "Modo oscuro",
-                        subtitle = "Tema oscuro activado por defecto.",
+                        subtitle = "Cambia entre el tema claro y oscuro.",
                         checked = darkModeEnabled,
-                        onCheckedChange = { darkModeEnabled = it },
+                        onCheckedChange = onDarkModeChange,
                         icon = {
                             Icon(
                                 imageVector = Icons.Filled.DarkMode,
-                                contentDescription = null
-                            )
-                        }
-                    )
-
-                    SettingSwitchRow(
-                        title = "Notificaciones",
-                        subtitle = "Recordatorios y avisos de compras.",
-                        checked = notificationsEnabled,
-                        onCheckedChange = { notificationsEnabled = it },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Filled.Notifications,
-                                contentDescription = null
-                            )
-                        }
-                    )
-
-                    SettingInfoRow(
-                        title = "Idioma",
-                        value = "Español",
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Filled.Language,
                                 contentDescription = null
                             )
                         }
@@ -165,35 +136,6 @@ private fun SettingSwitchRow(
                 uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
             )
-        )
-    }
-}
-
-@Composable
-private fun SettingInfoRow(
-    title: String,
-    value: String,
-    icon: @Composable () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        SettingIconContainer(content = icon)
-        Text(
-            modifier = Modifier.weight(1f),
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

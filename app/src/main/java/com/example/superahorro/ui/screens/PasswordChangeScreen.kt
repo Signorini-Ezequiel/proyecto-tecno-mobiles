@@ -37,6 +37,7 @@ fun PasswordChangeScreen(
 ) {
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
+    var confirmNewPassword by remember { mutableStateOf("") }
     var passwordMessage by remember { mutableStateOf<String?>(null) }
     var passwordIsError by remember { mutableStateOf(false) }
 
@@ -97,6 +98,23 @@ fun PasswordChangeScreen(
                 )
             )
 
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = confirmNewPassword,
+                onValueChange = {
+                    confirmNewPassword = it
+                    passwordMessage = null
+                },
+                label = { Text("Repetir nueva contraseña") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                )
+            )
+
             passwordMessage?.let {
                 Text(
                     text = it,
@@ -112,16 +130,22 @@ fun PasswordChangeScreen(
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    when (val result = onPasswordChange(currentPassword, newPassword)) {
-                        AuthResult.Success -> {
-                            currentPassword = ""
-                            newPassword = ""
-                            passwordIsError = false
-                            passwordMessage = "Contraseña actualizada."
-                        }
-                        is AuthResult.Error -> {
-                            passwordIsError = true
-                            passwordMessage = result.message
+                    if (newPassword != confirmNewPassword) {
+                        passwordIsError = true
+                        passwordMessage = "Las nuevas contrasenas no coinciden."
+                    } else {
+                        when (val result = onPasswordChange(currentPassword, newPassword)) {
+                            AuthResult.Success -> {
+                                currentPassword = ""
+                                newPassword = ""
+                                confirmNewPassword = ""
+                                passwordIsError = false
+                                passwordMessage = "Contrasena actualizada."
+                            }
+                            is AuthResult.Error -> {
+                                passwordIsError = true
+                                passwordMessage = result.message
+                            }
                         }
                     }
                 },
