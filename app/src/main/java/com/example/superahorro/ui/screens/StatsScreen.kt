@@ -24,7 +24,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.superahorro.viewmodel.PurchaseViewModel
@@ -65,7 +66,6 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
         .mapValues { entry -> entry.value.sumOf { it.total } }
         .toList()
         .sortedByDescending { it.second }
-    val maxMarketSpent = spendingByMarket.maxOfOrNull { it.second } ?: 1.0
     val selectedMonthLabel = selectedMonth?.label ?: "Sin datos"
 
     Scaffold(
@@ -136,8 +136,7 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
             ) { (market, total) ->
                 MarketSpendingRow(
                     market = market,
-                    total = total,
-                    progress = (total / maxMarketSpent).toFloat()
+                    total = total
                 )
             }
 
@@ -251,8 +250,7 @@ private fun MonthSelectorCard(
 @Composable
 private fun MarketSpendingRow(
     market: String,
-    total: Double,
-    progress: Float
+    total: Double
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -261,37 +259,29 @@ private fun MarketSpendingRow(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = market,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = formatMoney(total),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            LinearProgressIndicator(
-                progress = { progress.coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(50)),
+            Text(
+                modifier = Modifier.weight(1f),
+                text = market,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = formatMoney(total),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surface
+                textAlign = TextAlign.End,
+                maxLines = 1
             )
         }
     }
