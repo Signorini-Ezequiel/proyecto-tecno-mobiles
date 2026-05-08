@@ -49,7 +49,9 @@ import com.example.superahorro.navigation.AppRoutes
 import com.example.superahorro.viewmodel.PurchaseViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -182,8 +184,7 @@ fun NewPurchaseScreen(
                             confirmButton = {
                                 TextButton(onClick = {
                                     datePickerState.selectedDateMillis?.let { millis ->
-                                        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                                        date = formatter.format(Date(millis))
+                                        date = millis.toPurchaseDateString()
                                     }
                                     showDatePicker = false
                                 }) {
@@ -282,4 +283,21 @@ private fun PurchaseTextField(
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     )
+}
+
+private fun Long.toPurchaseDateString(): String {
+    val utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        timeInMillis = this@toPurchaseDateString
+    }
+    val localCalendar = Calendar.getInstance().apply {
+        set(Calendar.YEAR, utcCalendar.get(Calendar.YEAR))
+        set(Calendar.MONTH, utcCalendar.get(Calendar.MONTH))
+        set(Calendar.DAY_OF_MONTH, utcCalendar.get(Calendar.DAY_OF_MONTH))
+        set(Calendar.HOUR_OF_DAY, 12)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    return formatter.format(Date(localCalendar.timeInMillis))
 }

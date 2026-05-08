@@ -38,9 +38,13 @@ fun HomeScreen(
     purchaseViewModel: PurchaseViewModel = viewModel()
 ) {
     val purchases by purchaseViewModel.purchases.collectAsState()
+    val sortedPurchases = purchases.sortedWith(
+        compareByDescending<Purchase> { it.purchaseDateSortKey() }
+            .thenByDescending { it.id }
+    )
     val totalMonth = purchases.sumOf { it.total }
-    val lastPurchase = purchases.firstOrNull()
-    val latestPurchases = purchases.take(3)
+    val lastPurchase = sortedPurchases.firstOrNull()
+    val latestPurchases = sortedPurchases.take(3)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -235,6 +239,14 @@ private fun PurchasePreviewCard(
             )
         }
     }
+}
+
+private fun Purchase.purchaseDateSortKey(): Int {
+    val parts = date.split("/")
+    val day = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val month = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    val year = parts.getOrNull(2)?.toIntOrNull() ?: 0
+    return year * 10000 + month * 100 + day
 }
 
 @Composable

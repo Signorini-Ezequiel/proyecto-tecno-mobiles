@@ -209,11 +209,6 @@ fun ProfileScreen(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = "El cambio de contraseña se realiza en una pantalla separada para mayor seguridad.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { navController.navigate(AppRoutes.PasswordChange.route) },
