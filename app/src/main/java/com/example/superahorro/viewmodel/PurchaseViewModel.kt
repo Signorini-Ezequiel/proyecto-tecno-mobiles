@@ -23,6 +23,12 @@ class PurchaseViewModel : ViewModel() {
         newPurchaseDate = date
     }
 
+    fun loadPurchaseDraft(purchase: Purchase) {
+        newPurchaseMarket = purchase.marketName
+        newPurchaseDate = purchase.date
+        _newPurchaseProducts.value = purchase.products
+    }
+
     fun addProductToNewPurchase(name: String, quantity: Int, price: Double) {
         val id = (_newPurchaseProducts.value.maxOfOrNull { it.id } ?: 0) + 1
         val newProduct = Product(id, name, quantity, price)

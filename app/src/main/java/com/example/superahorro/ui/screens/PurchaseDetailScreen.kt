@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.superahorro.data.Product
 import com.example.superahorro.data.Purchase
+import com.example.superahorro.navigation.AppRoutes
 
 @Composable
 fun PurchaseDetailScreen(
@@ -68,7 +69,9 @@ fun PurchaseDetailScreen(
                 item {
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { },
+                        onClick = {
+                            navController.navigate(AppRoutes.EditPurchase.createRoute(purchase.id))
+                        },
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,

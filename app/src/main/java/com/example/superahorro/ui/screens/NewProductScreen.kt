@@ -48,6 +48,8 @@ import com.example.superahorro.viewmodel.PurchaseViewModel
 @Composable
 fun NewProductScreen(
     navController: NavController,
+    isEditingPurchase: Boolean = false,
+    finishRoute: String? = null,
     purchaseViewModel: PurchaseViewModel = viewModel(navController.previousBackStackEntry!!)
 ) {
     var name by remember { mutableStateOf("") }
@@ -78,13 +80,17 @@ fun NewProductScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Agregar productos",
+                        text = if (isEditingPurchase) "Editar productos" else "Agregar productos",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Agrega productos a la compra. El total se calcula automáticamente.",
+                        text = if (isEditingPurchase) {
+                            "Modifica los productos de la compra. El total se calcula automaticamente."
+                        } else {
+                            "Agrega productos a la compra. El total se calcula automaticamente."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -314,7 +320,11 @@ fun NewProductScreen(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            if (purchaseViewModel.saveNewPurchase()) {
+                            if (isEditingPurchase) {
+                                if (!navController.popBackStack(AppRoutes.PurchaseDetail.route, false)) {
+                                    finishRoute?.let { navController.navigate(it) }
+                                }
+                            } else if (purchaseViewModel.saveNewPurchase()) {
                                 navController.navigate(AppRoutes.Home.route) {
                                     popUpTo(AppRoutes.Home.route) { inclusive = true }
                                 }
@@ -328,11 +338,11 @@ fun NewProductScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Save,
-                            contentDescription = "Guardar compra"
+                            contentDescription = if (isEditingPurchase) "Terminar edicion" else "Guardar compra"
                         )
                         Text(
                             modifier = Modifier.padding(start = 8.dp),
-                            text = "Guardar compra"
+                            text = if (isEditingPurchase) "Listo" else "Guardar compra"
                         )
                     }
                 }

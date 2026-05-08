@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Store
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.superahorro.data.Purchase
 import com.example.superahorro.navigation.AppRoutes
 import com.example.superahorro.viewmodel.PurchaseViewModel
 import java.text.SimpleDateFormat
@@ -54,6 +55,8 @@ import java.util.Locale
 @Composable
 fun NewPurchaseScreen(
     navController: NavController,
+    purchase: Purchase? = null,
+    isEditing: Boolean = false,
     purchaseViewModel: PurchaseViewModel = viewModel()
 ) {
     var marketName by remember { mutableStateOf("") }
@@ -64,6 +67,14 @@ fun NewPurchaseScreen(
 
     val marketHasError = showValidation && marketName.isBlank()
     val dateHasError = showValidation && date.isBlank()
+
+    LaunchedEffect(purchase?.id, isEditing) {
+        if (isEditing && purchase != null) {
+            marketName = purchase.marketName
+            date = purchase.date
+            purchaseViewModel.loadPurchaseDraft(purchase)
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -78,13 +89,17 @@ fun NewPurchaseScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Nueva compra",
+                    text = if (isEditing) "Editar compra" else "Nueva compra",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Carga los datos principales del ticket.",
+                    text = if (isEditing) {
+                        "Modifica los datos principales del ticket."
+                    } else {
+                        "Carga los datos principales del ticket."
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -192,7 +207,11 @@ fun NewPurchaseScreen(
                 onClick = {
                     if (marketName.isNotBlank() && date.isNotBlank()) {
                         purchaseViewModel.setNewPurchaseDetails(marketName, date)
-                        navController.navigate(AppRoutes.NewProduct.route)
+                        if (isEditing && purchase != null) {
+                            navController.navigate(AppRoutes.EditPurchaseProducts.createRoute(purchase.id))
+                        } else {
+                            navController.navigate(AppRoutes.NewProduct.route)
+                        }
                     } else {
                         showValidation = true
                     }
@@ -204,11 +223,11 @@ fun NewPurchaseScreen(
             ) {
                 Icon(
                     imageVector = Icons.Filled.AddShoppingCart,
-                    contentDescription = "Agregar productos"
+                    contentDescription = if (isEditing) "Editar productos" else "Agregar productos"
                 )
                 Text(
                     modifier = Modifier.padding(start = 8.dp),
-                    text = "Agregar productos"
+                    text = if (isEditing) "Editar productos" else "Agregar productos"
                 )
             }
 

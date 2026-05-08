@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.superahorro.data.Purchase
 import com.example.superahorro.viewmodel.PurchaseViewModel
@@ -204,7 +205,7 @@ private fun BarChartCard(spendingByMarket: List<Pair<String, Double>>) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp),
+                    .height(220.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.Bottom
             ) {
@@ -232,10 +233,15 @@ private fun BarChartCard(spendingByMarket: List<Pair<String, Double>>) {
                                 .background(MaterialTheme.colorScheme.primary)
                         )
                         Text(
-                            modifier = Modifier.padding(top = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp)
+                                .padding(top = 8.dp, start = 2.dp, end = 2.dp),
                             text = market.shortMarketName(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2
                         )
                     }
                 }

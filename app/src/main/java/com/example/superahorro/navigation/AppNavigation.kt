@@ -93,6 +93,28 @@ fun AppNavigation() {
             composable(AppRoutes.NewProduct.route) {
                 NewProductScreen(navController = navController)
             }
+            composable(
+                route = AppRoutes.EditPurchase.route,
+                arguments = listOf(navArgument("purchaseId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val purchaseId = backStackEntry.arguments?.getInt("purchaseId") ?: 0
+                NewPurchaseScreen(
+                    navController = navController,
+                    purchase = purchaseViewModel.getPurchaseById(purchaseId),
+                    isEditing = true
+                )
+            }
+            composable(
+                route = AppRoutes.EditPurchaseProducts.route,
+                arguments = listOf(navArgument("purchaseId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val purchaseId = backStackEntry.arguments?.getInt("purchaseId") ?: 0
+                NewProductScreen(
+                    navController = navController,
+                    isEditingPurchase = true,
+                    finishRoute = AppRoutes.PurchaseDetail.createRoute(purchaseId)
+                )
+            }
             composable(AppRoutes.PurchaseList.route) {
                 PurchaseListScreen(navController = navController)
             }
