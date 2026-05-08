@@ -85,13 +85,22 @@ fun AppNavigation() {
                 )
             }
             composable(AppRoutes.Home.route) {
-                HomeScreen(navController = navController)
+                HomeScreen(
+                    navController = navController,
+                    purchaseViewModel = purchaseViewModel
+                )
             }
             composable(AppRoutes.NewPurchase.route) {
-                NewPurchaseScreen(navController = navController)
+                NewPurchaseScreen(
+                    navController = navController,
+                    purchaseViewModel = purchaseViewModel
+                )
             }
             composable(AppRoutes.NewProduct.route) {
-                NewProductScreen(navController = navController)
+                NewProductScreen(
+                    navController = navController,
+                    purchaseViewModel = purchaseViewModel
+                )
             }
             composable(
                 route = AppRoutes.EditPurchase.route,
@@ -101,7 +110,8 @@ fun AppNavigation() {
                 NewPurchaseScreen(
                     navController = navController,
                     purchase = purchaseViewModel.getPurchaseById(purchaseId),
-                    isEditing = true
+                    isEditing = true,
+                    purchaseViewModel = purchaseViewModel
                 )
             }
             composable(
@@ -112,11 +122,15 @@ fun AppNavigation() {
                 NewProductScreen(
                     navController = navController,
                     isEditingPurchase = true,
-                    finishRoute = AppRoutes.PurchaseDetail.createRoute(purchaseId)
+                    finishRoute = AppRoutes.PurchaseDetail.createRoute(purchaseId),
+                    purchaseViewModel = purchaseViewModel
                 )
             }
             composable(AppRoutes.PurchaseList.route) {
-                PurchaseListScreen(navController = navController)
+                PurchaseListScreen(
+                    navController = navController,
+                    purchaseViewModel = purchaseViewModel
+                )
             }
             composable(
                 route = AppRoutes.PurchaseDetail.route,
@@ -129,10 +143,13 @@ fun AppNavigation() {
                 )
             }
             composable(AppRoutes.History.route) {
-                HistoryScreen(navController = navController)
+                HistoryScreen(
+                    navController = navController,
+                    purchaseViewModel = purchaseViewModel
+                )
             }
             composable(AppRoutes.Stats.route) {
-                StatsScreen()
+                StatsScreen(purchaseViewModel = purchaseViewModel)
             }
             composable(AppRoutes.Profile.route) {
                 ProfileScreen(

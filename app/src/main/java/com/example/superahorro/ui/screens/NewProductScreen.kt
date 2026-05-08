@@ -1,12 +1,12 @@
 package com.example.superahorro.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.Modifier
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AttachMoney
@@ -38,9 +38,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavOptionsBuilder
 import com.example.superahorro.data.Product
 import com.example.superahorro.navigation.AppRoutes
 import com.example.superahorro.viewmodel.PurchaseViewModel
@@ -50,7 +48,7 @@ fun NewProductScreen(
     navController: NavController,
     isEditingPurchase: Boolean = false,
     finishRoute: String? = null,
-    purchaseViewModel: PurchaseViewModel = viewModel(navController.previousBackStackEntry!!)
+    purchaseViewModel: PurchaseViewModel
 ) {
     var name by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
@@ -66,6 +64,9 @@ fun NewProductScreen(
     val total = purchaseViewModel.getNewPurchaseTotal()
     val market = purchaseViewModel.getNewPurchaseMarket()
     val purchaseDate = purchaseViewModel.getNewPurchaseDate()
+    val quantityValue = quantity.toIntOrNull() ?: 0
+    val priceValue = price.toDoubleOrNull() ?: 0.0
+    val currentProductTotal = quantityValue * priceValue
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -94,6 +95,32 @@ fun NewProductScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        SummaryPill(
+                            modifier = Modifier.weight(1f),
+                            label = "Supermercado",
+                            value = market.ifBlank { "Sin definir" }
+                        )
+                        SummaryPill(
+                            modifier = Modifier.weight(1f),
+                            label = "Fecha",
+                            value = purchaseDate.ifBlank { "Sin definir" }
+                        )
+                    }
                 }
             }
 
@@ -156,6 +183,11 @@ fun NewProductScreen(
                             }
                         )
 
+                        PurchaseTotalsStrip(
+                            productTotal = currentProductTotal,
+                            purchaseTotal = total
+                        )
+
                         Button(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
@@ -216,82 +248,34 @@ fun NewProductScreen(
 
             if (products.isNotEmpty()) {
                 item {
-                    Text(
-                        text = "Productos agregados",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "Productos agregados",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "Vista en tabla con subtotal por producto y acciones rapidas.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
-                items(products) { product ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = product.name,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceEvenly
-                                    ) {
-                                        Text(
-                                            text = "Cant: ${product.quantity}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = "Precio: $${product.price}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = "Total: $${product.quantity * product.price}",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                                Row {
-                                    IconButton(onClick = {
-                                        editingProduct = product
-                                        name = product.name
-                                        quantity = product.quantity.toString()
-                                        price = product.price.toString()
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Edit,
-                                            contentDescription = "Editar producto",
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                    IconButton(onClick = { purchaseViewModel.removeProductFromNewPurchase(product.id) }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Delete,
-                                            contentDescription = "Eliminar producto",
-                                            tint = MaterialTheme.colorScheme.error
-                                        )
-                                    }
-                                }
-                            }
+                item {
+                    ProductsTable(
+                        products = products,
+                        onEdit = { product ->
+                            editingProduct = product
+                            name = product.name
+                            quantity = product.quantity.toString()
+                            price = product.price.toString()
+                        },
+                        onDelete = { product ->
+                            purchaseViewModel.removeProductFromNewPurchase(product.id)
                         }
-                    }
+                    )
                 }
 
                 item {
@@ -400,6 +384,167 @@ private fun ProductTextField(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
         )
+    )
+}
+
+@Composable
+private fun PurchaseTotalsStrip(
+    productTotal: Double,
+    purchaseTotal: Double
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SummaryPill(
+            modifier = Modifier.weight(1f),
+            label = "Total producto",
+            value = formatMoney(productTotal)
+        )
+        SummaryPill(
+            modifier = Modifier.weight(1f),
+            label = "Total compra",
+            value = formatMoney(purchaseTotal)
+        )
+    }
+}
+
+@Composable
+private fun SummaryPill(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductsTable(
+    products: List<Product>,
+    onEdit: (Product) -> Unit,
+    onDelete: (Product) -> Unit
+) {
+    val horizontalScroll = rememberScrollState()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(horizontalScroll)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TableCell("Producto", 2.4f, header = true)
+                TableCell("Cant.", 0.9f, header = true)
+                TableCell("Precio", 1.2f, header = true)
+                TableCell("Subtotal", 1.3f, header = true)
+                TableCell("Acciones", 1.2f, header = true)
+            }
+
+            products.forEachIndexed { index, product ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(horizontalScroll)
+                        .background(
+                            color = if (index % 2 == 0) {
+                                MaterialTheme.colorScheme.surface
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                            },
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TableCell(product.name, 2.4f)
+                    TableCell(product.quantity.toString(), 0.9f)
+                    TableCell(formatMoney(product.price), 1.2f)
+                    TableCell(formatMoney(product.quantity * product.price), 1.3f, emphasized = true)
+                    Row(
+                        modifier = Modifier.width(120.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { onEdit(product) }) {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = "Editar producto",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = { onDelete(product) }) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Eliminar producto",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.TableCell(
+    text: String,
+    weight: Float,
+    header: Boolean = false,
+    emphasized: Boolean = false
+    ) {
+    Text(
+        modifier = Modifier.weight(weight),
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = when {
+            header -> FontWeight.SemiBold
+            emphasized -> FontWeight.SemiBold
+            else -> FontWeight.Normal
+        },
+        color = when {
+            header -> MaterialTheme.colorScheme.onSurface
+            emphasized -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
     )
 }
 

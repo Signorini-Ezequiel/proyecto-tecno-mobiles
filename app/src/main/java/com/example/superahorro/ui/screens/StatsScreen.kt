@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -25,11 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.Canvas
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.superahorro.data.Purchase
 import com.example.superahorro.viewmodel.PurchaseViewModel
 
 @Composable
@@ -93,7 +95,10 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
             }
 
             item {
-                BarChartCard(spendingByMarket = spendingByMarket)
+                PieChartCard(
+                    spendingByMarket = spendingByMarket,
+                    totalSpent = totalSpent
+                )
             }
         }
     }
@@ -182,8 +187,19 @@ private fun MarketSpendingRow(
 }
 
 @Composable
-private fun BarChartCard(spendingByMarket: List<Pair<String, Double>>) {
-    val maxValue = spendingByMarket.maxOfOrNull { it.second } ?: 1.0
+private fun PieChartCard(
+    spendingByMarket: List<Pair<String, Double>>,
+    totalSpent: Double
+) {
+    val chartColors = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.tertiary,
+        Color(0xFF5B8C5A),
+        Color(0xFFE07A5F),
+        Color(0xFF3D405B),
+        Color(0xFFF2CC8F)
+    )
+    val innerCircleColor = MaterialTheme.colorScheme.surface
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -197,52 +213,91 @@ private fun BarChartCard(spendingByMarket: List<Pair<String, Double>>) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Grafico de barras",
+                text = "Grafico de torta",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                spendingByMarket.forEach { (market, total) ->
-                    val barHeight = (total / maxValue).coerceIn(0.15, 1.0)
-                    Column(
+
+            if (spendingByMarket.isEmpty() || totalSpent <= 0.0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Todavia no hay datos para visualizar.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Canvas(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Bottom
+                            .aspectRatio(1f)
                     ) {
-                        Text(
-                            text = formatMoney(total),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                        var startAngle = -90f
+                        spendingByMarket.forEachIndexed { index, (_, total) ->
+                            val sweepAngle = ((total / totalSpent) * 360f).toFloat()
+                            drawArc(
+                                color = chartColors[index % chartColors.size],
+                                startAngle = startAngle,
+                                sweepAngle = sweepAngle,
+                                useCenter = true,
+                                size = Size(size.width, size.height)
+                            )
+                            startAngle += sweepAngle
+                        }
+
+                        drawCircle(
+                            color = innerCircleColor,
+                            radius = size.minDimension * 0.28f
                         )
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 8.dp)
-                                .widthIn(min = 34.dp, max = 48.dp)
-                                .fillMaxHeight(barHeight.toFloat())
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(MaterialTheme.colorScheme.primary)
-                        )
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(40.dp)
-                                .padding(top = 8.dp, start = 2.dp, end = 2.dp),
-                            text = market.shortMarketName(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            maxLines = 2
-                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1.1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        spendingByMarket.forEachIndexed { index, (market, total) ->
+                            val percentage = ((total / totalSpent) * 100).toInt()
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .widthIn(min = 12.dp, max = 12.dp)
+                                        .height(12.dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(chartColors[index % chartColors.size])
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = market,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "${formatMoney(total)} · $percentage%",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            if (index != spendingByMarket.lastIndex) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            }
+                        }
                     }
                 }
             }
@@ -252,8 +307,4 @@ private fun BarChartCard(spendingByMarket: List<Pair<String, Double>>) {
 
 private fun formatMoney(amount: Double): String {
     return "${'$'}${amount.toInt()}"
-}
-
-private fun String.shortMarketName(): String {
-    return split(" ").firstOrNull().orEmpty()
 }
