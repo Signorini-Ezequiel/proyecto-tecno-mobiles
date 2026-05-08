@@ -1,10 +1,7 @@
 package com.example.superahorro.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -24,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,7 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.filled.Save
@@ -248,19 +249,12 @@ fun NewProductScreen(
 
             if (products.isNotEmpty()) {
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "Productos agregados",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = "Vista en tabla con subtotal por producto y acciones rapidas.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Productos agregados",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 }
 
                 item {
@@ -447,8 +441,6 @@ private fun ProductsTable(
     onEdit: (Product) -> Unit,
     onDelete: (Product) -> Unit
 ) {
-    val horizontalScroll = rememberScrollState()
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -457,67 +449,130 @@ private fun ProductsTable(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(horizontalScroll)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(14.dp)
-                    )
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TableCell("Producto", 2.4f, header = true)
-                TableCell("Cant.", 0.9f, header = true)
-                TableCell("Precio", 1.2f, header = true)
-                TableCell("Subtotal", 1.3f, header = true)
-                TableCell("Acciones", 1.2f, header = true)
-            }
+            ProductsTableHeader()
 
             products.forEachIndexed { index, product ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(horizontalScroll)
-                        .background(
-                            color = if (index % 2 == 0) {
-                                MaterialTheme.colorScheme.surface
-                            } else {
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-                            },
-                            shape = RoundedCornerShape(14.dp)
-                        )
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                ProductTableRow(
+                    product = product,
+                    striped = index % 2 != 0,
+                    onEdit = onEdit,
+                    onDelete = onDelete
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductsTableHeader() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ProductNameCell(
+                text = "Producto",
+                header = true,
+                modifier = Modifier.weight(1f)
+            )
+            CompactTableCell(
+                text = "Cant.",
+                width = 42.dp,
+                header = true
+            )
+            CompactTableCell(
+                text = "Precio",
+                width = 50.dp,
+                header = true
+            )
+            CompactTableCell(
+                text = "Subt.",
+                width = 50.dp,
+                header = true
+            )
+            CompactTableCell(
+                text = "Acc.",
+                width = 56.dp,
+                header = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductTableRow(
+    product: Product,
+    striped: Boolean,
+    onEdit: (Product) -> Unit,
+    onDelete: (Product) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = if (striped) {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.24f)
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ProductNameCell(
+                text = product.name,
+                modifier = Modifier.weight(1f)
+            )
+            CompactTableCell(
+                text = product.quantity.toString(),
+                width = 42.dp
+            )
+            CompactTableCell(
+                text = formatMoney(product.price),
+                width = 50.dp
+            )
+            CompactTableCell(
+                text = formatMoney(product.quantity * product.price),
+                width = 50.dp,
+                emphasized = true
+            )
+            Row(
+                modifier = Modifier.width(56.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { onEdit(product) },
+                    modifier = Modifier.size(24.dp)
                 ) {
-                    TableCell(product.name, 2.4f)
-                    TableCell(product.quantity.toString(), 0.9f)
-                    TableCell(formatMoney(product.price), 1.2f)
-                    TableCell(formatMoney(product.quantity * product.price), 1.3f, emphasized = true)
-                    Row(
-                        modifier = Modifier.width(120.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = { onEdit(product) }) {
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = "Editar producto",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        IconButton(onClick = { onDelete(product) }) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = "Eliminar producto",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Editar producto",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                IconButton(
+                    onClick = { onDelete(product) },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Eliminar producto",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
         }
@@ -525,14 +580,14 @@ private fun ProductsTable(
 }
 
 @Composable
-private fun RowScope.TableCell(
+private fun ProductNameCell(
     text: String,
-    weight: Float,
+    modifier: Modifier = Modifier,
     header: Boolean = false,
     emphasized: Boolean = false
-    ) {
+) {
     Text(
-        modifier = Modifier.weight(weight),
+        modifier = modifier.padding(end = 8.dp),
         text = text,
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = when {
@@ -544,7 +599,36 @@ private fun RowScope.TableCell(
             header -> MaterialTheme.colorScheme.onSurface
             emphasized -> MaterialTheme.colorScheme.primary
             else -> MaterialTheme.colorScheme.onSurfaceVariant
-        }
+        },
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+@Composable
+private fun CompactTableCell(
+    text: String,
+    width: androidx.compose.ui.unit.Dp,
+    header: Boolean = false,
+    emphasized: Boolean = false
+) {
+    Text(
+        modifier = Modifier.width(width),
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = when {
+            header -> FontWeight.SemiBold
+            emphasized -> FontWeight.SemiBold
+            else -> FontWeight.Normal
+        },
+        color = when {
+            header -> MaterialTheme.colorScheme.onSurface
+            emphasized -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        overflow = TextOverflow.Clip
     )
 }
 

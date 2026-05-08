@@ -1,6 +1,7 @@
 package com.example.superahorro.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,38 +13,43 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.geometry.Size
-import androidx.compose.foundation.Canvas
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.superahorro.viewmodel.PurchaseViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
     val purchases by purchaseViewModel.purchases.collectAsState()
-    val totalSpent = purchases.sumOf { it.total }
-    val spendingByMarket = purchases
+    val currentMonthPurchases = purchases.filter { it.date.isInCurrentMonth() }
+    val totalSpent = currentMonthPurchases.sumOf { it.total }
+    val spendingByMarket = currentMonthPurchases
         .groupBy { it.marketName }
         .mapValues { entry -> entry.value.sumOf { it.total } }
         .toList()
         .sortedByDescending { it.second }
     val maxMarketSpent = spendingByMarket.maxOfOrNull { it.second } ?: 1.0
+    val currentMonthLabel = currentMonthLabel()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -64,7 +70,7 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Analisis visual con datos simulados.",
+                        text = "Analisis visual del mes de $currentMonthLabel.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -72,7 +78,11 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
             }
 
             item {
-                TotalSpentCard(totalSpent = totalSpent)
+                TotalSpentCard(
+                    totalSpent = totalSpent,
+                    purchasesCount = currentMonthPurchases.size,
+                    currentMonthLabel = currentMonthLabel
+                )
             }
 
             item {
@@ -105,7 +115,11 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
 }
 
 @Composable
-private fun TotalSpentCard(totalSpent: Double) {
+private fun TotalSpentCard(
+    totalSpent: Double,
+    purchasesCount: Int,
+    currentMonthLabel: String
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -129,7 +143,7 @@ private fun TotalSpentCard(totalSpent: Double) {
                 color = MaterialTheme.colorScheme.onPrimary
             )
             Text(
-                text = "Compras registradas este periodo",
+                text = "$purchasesCount compras registradas en $currentMonthLabel",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
             )
@@ -262,11 +276,16 @@ private fun PieChartCard(
                         )
                     }
 
-                    Column(
-                        modifier = Modifier.weight(1.1f),
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1.1f)
+                            .height(220.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        spendingByMarket.forEachIndexed { index, (market, total) ->
+                        itemsIndexed(
+                            items = spendingByMarket,
+                            key = { _, item -> item.first }
+                        ) { index, (market, total) ->
                             val percentage = ((total / totalSpent) * 100).toInt()
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -307,4 +326,19 @@ private fun PieChartCard(
 
 private fun formatMoney(amount: Double): String {
     return "${'$'}${amount.toInt()}"
+}
+
+private fun String.isInCurrentMonth(): Boolean {
+    val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val parsedDate = formatter.parse(this) ?: return false
+    val purchaseCalendar = Calendar.getInstance().apply { time = parsedDate }
+    val currentCalendar = Calendar.getInstance()
+    return purchaseCalendar.get(Calendar.YEAR) == currentCalendar.get(Calendar.YEAR) &&
+        purchaseCalendar.get(Calendar.MONTH) == currentCalendar.get(Calendar.MONTH)
+}
+
+private fun currentMonthLabel(): String {
+    val formatter = SimpleDateFormat("MMMM yyyy", Locale("es", "AR"))
+    return formatter.format(Calendar.getInstance().time)
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "AR")) else it.toString() }
 }
