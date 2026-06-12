@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -33,6 +34,7 @@ fun SuperAhorroBottomBar(
                 animationSpec = spring(),
                 label = "bottom_nav_icon_scale"
             )
+            val title = stringResource(item.titleRes)
 
             NavigationBarItem(
                 selected = selected,
@@ -48,13 +50,13 @@ fun SuperAhorroBottomBar(
                 icon = {
                     Icon(
                         imageVector = item.icon,
-                        contentDescription = item.title,
+                        contentDescription = title,
                         modifier = Modifier
                             .size(24.dp)
                             .scale(iconScale)
                     )
                 },
-                label = { Text(item.title) },
+                label = { Text(title) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.onPrimary,
                     selectedTextColor = MaterialTheme.colorScheme.primary,

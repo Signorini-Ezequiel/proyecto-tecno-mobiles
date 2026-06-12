@@ -19,9 +19,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
 
 @Composable
@@ -83,7 +85,7 @@ fun ScreenLayout(
                                     contentColor = MaterialTheme.colorScheme.primary
                                 )
                             ) {
-                                Text("Volver")
+                                Text(stringResource(R.string.back))
                             }
                         }
                         Button(
@@ -95,7 +97,7 @@ fun ScreenLayout(
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
-                            Text("Inicio")
+                            Text(stringResource(R.string.home))
                         }
                     }
                 }

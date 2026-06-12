@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.Button
@@ -34,19 +35,23 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.Purchase
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
-import com.undef.superahorro.haronsignorini.viewmodel.PurchaseViewModel
+import com.undef.superahorro.haronsignorini.ui.components.ConfirmationDialog
+import com.undef.superahorro.haronsignorini.viewmodel.NewPurchaseViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Calendar
@@ -59,12 +64,13 @@ fun NewPurchaseScreen(
     navController: NavController,
     purchase: Purchase? = null,
     isEditing: Boolean = false,
-    purchaseViewModel: PurchaseViewModel = viewModel()
+    newPurchaseViewModel: NewPurchaseViewModel = viewModel()
 ) {
-    var marketName by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
+    val marketName by newPurchaseViewModel.newPurchaseMarket.collectAsState()
+    val date by newPurchaseViewModel.newPurchaseDate.collectAsState()
     var showValidation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
     val marketHasError = showValidation && marketName.isBlank()
@@ -72,9 +78,9 @@ fun NewPurchaseScreen(
 
     LaunchedEffect(purchase?.id, isEditing) {
         if (isEditing && purchase != null) {
-            marketName = purchase.marketName
-            date = purchase.date
-            purchaseViewModel.loadPurchaseDraft(purchase)
+            newPurchaseViewModel.loadPurchaseDraft(purchase)
+        } else if (!isEditing) {
+            newPurchaseViewModel.prepareNewPurchaseDraft()
         }
     }
 
@@ -91,16 +97,16 @@ fun NewPurchaseScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = if (isEditing) "Editar compra" else "Nueva compra",
+                    text = if (isEditing) stringResource(R.string.edit_purchase) else stringResource(R.string.new_purchase),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = if (isEditing) {
-                        "Modifica los datos principales del ticket."
+                        stringResource(R.string.edit_purchase_subtitle)
                     } else {
-                        "Carga los datos principales del ticket."
+                        stringResource(R.string.new_purchase_subtitle)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -120,11 +126,13 @@ fun NewPurchaseScreen(
                 ) {
                     PurchaseTextField(
                         value = marketName,
-                        onValueChange = { marketName = it },
-                        label = "Supermercado",
-                        placeholder = "Ej: Supermercado Centro",
+                        onValueChange = {
+                            newPurchaseViewModel.setNewPurchaseDetails(it, date)
+                        },
+                        label = stringResource(R.string.market),
+                        placeholder = stringResource(R.string.market_placeholder),
                         isError = marketHasError,
-                        supportingText = if (marketHasError) "Campo requerido" else null,
+                        supportingText = if (marketHasError) stringResource(R.string.field_required) else null,
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Filled.Store,
@@ -141,18 +149,18 @@ fun NewPurchaseScreen(
                         OutlinedTextField(
                             value = date,
                             onValueChange = { },
-                            label = { Text("Fecha") },
-                            placeholder = { Text("Selecciona una fecha") },
+                            label = { Text(stringResource(R.string.date)) },
+                            placeholder = { Text(stringResource(R.string.date_placeholder)) },
                             isError = dateHasError,
                             supportingText = if (dateHasError) {
-                                { Text("Campo requerido") }
+                                { Text(stringResource(R.string.field_required)) }
                             } else {
                                 null
                             },
                             trailingIcon = {
                                 Icon(
                                     imageVector = Icons.Filled.CalendarMonth,
-                                    contentDescription = "Seleccionar fecha"
+                                    contentDescription = stringResource(R.string.select_date)
                                 )
                             },
                             readOnly = true,
@@ -184,16 +192,19 @@ fun NewPurchaseScreen(
                             confirmButton = {
                                 TextButton(onClick = {
                                     datePickerState.selectedDateMillis?.let { millis ->
-                                        date = millis.toPurchaseDateString()
+                                        newPurchaseViewModel.setNewPurchaseDetails(
+                                            marketName,
+                                            millis.toPurchaseDateString()
+                                        )
                                     }
                                     showDatePicker = false
                                 }) {
-                                    Text("OK")
+                                    Text(stringResource(R.string.ok))
                                 }
                             },
                             dismissButton = {
                                 TextButton(onClick = { showDatePicker = false }) {
-                                    Text("Cancelar")
+                                    Text(stringResource(R.string.cancel))
                                 }
                             }
                         ) {
@@ -207,7 +218,7 @@ fun NewPurchaseScreen(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     if (marketName.isNotBlank() && date.isNotBlank()) {
-                        purchaseViewModel.setNewPurchaseDetails(marketName, date)
+                        newPurchaseViewModel.setNewPurchaseDetails(marketName, date)
                         if (isEditing && purchase != null) {
                             navController.navigate(AppRoutes.EditPurchaseProducts.createRoute(purchase.id))
                         } else {
@@ -224,11 +235,71 @@ fun NewPurchaseScreen(
             ) {
                 Icon(
                     imageVector = Icons.Filled.AddShoppingCart,
-                    contentDescription = if (isEditing) "Editar productos" else "Agregar productos"
+                    contentDescription = if (isEditing) stringResource(R.string.edit_products) else stringResource(R.string.add_products)
                 )
                 Text(
                     modifier = Modifier.padding(start = 8.dp),
-                    text = if (isEditing) "Editar productos" else "Agregar productos"
+                    text = if (isEditing) stringResource(R.string.edit_products) else stringResource(R.string.add_products)
+                )
+            }
+
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    newPurchaseViewModel.setNewPurchaseDetails(marketName, date)
+                    if (newPurchaseViewModel.saveNewPurchase()) {
+                        if (isEditing && purchase != null) {
+                            if (!navController.popBackStack()) {
+                                navController.navigate(AppRoutes.PurchaseDetail.createRoute(purchase.id))
+                            }
+                        } else {
+                            navController.navigate(AppRoutes.Home.route) {
+                                popUpTo(AppRoutes.Home.route) { inclusive = true }
+                            }
+                        }
+                    } else {
+                        showValidation = true
+                    }
+                },
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Save,
+                    contentDescription = stringResource(R.string.save_purchase)
+                )
+                Text(
+                    modifier = Modifier.padding(start = 8.dp),
+                    text = if (isEditing) stringResource(R.string.save_changes) else stringResource(R.string.save_purchase)
+                )
+            }
+
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { showDeleteDialog = true },
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = if (isEditing) {
+                        stringResource(R.string.delete_purchase)
+                    } else {
+                        stringResource(R.string.discard_purchase)
+                    }
+                )
+                Text(
+                    modifier = Modifier.padding(start = 8.dp),
+                    text = if (isEditing) {
+                        stringResource(R.string.delete_purchase)
+                    } else {
+                        stringResource(R.string.discard_purchase)
+                    }
                 )
             }
 
@@ -240,9 +311,38 @@ fun NewPurchaseScreen(
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("Volver")
+                Text(stringResource(R.string.back))
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        ConfirmationDialog(
+            title = if (isEditing) {
+                stringResource(R.string.delete_purchase)
+            } else {
+                stringResource(R.string.discard_purchase)
+            },
+            message = if (isEditing && purchase != null) {
+                stringResource(R.string.delete_purchase_confirmation, purchase.marketName)
+            } else {
+                stringResource(R.string.discard_purchase_confirmation)
+            },
+            confirmText = stringResource(R.string.delete),
+            dismissText = stringResource(R.string.cancel),
+            onConfirm = {
+                showDeleteDialog = false
+                if (isEditing && purchase != null) {
+                    newPurchaseViewModel.deleteCurrentPurchase()
+                } else {
+                    newPurchaseViewModel.clearNewPurchase()
+                }
+                navController.navigate(AppRoutes.Home.route) {
+                    popUpTo(AppRoutes.Home.route) { inclusive = true }
+                }
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
     }
 }
 

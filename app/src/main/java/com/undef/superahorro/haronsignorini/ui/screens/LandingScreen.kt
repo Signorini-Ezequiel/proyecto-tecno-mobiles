@@ -24,9 +24,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
 
 @Composable
@@ -68,20 +70,20 @@ fun LandingScreen(navController: NavController) {
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.ShoppingCart,
-                                contentDescription = "SuperAhorro",
+                                contentDescription = stringResource(R.string.app_name),
                                 modifier = Modifier.size(36.dp),
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = "SuperAhorro",
+                                text = stringResource(R.string.app_name),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Controla tus gastos de supermercado.",
+                                text = stringResource(R.string.landing_subtitle),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -89,7 +91,7 @@ fun LandingScreen(navController: NavController) {
                     }
 
                     Text(
-                        text = "Inicia sesion o crea una cuenta para mantener tus datos disponibles cuando vuelvas a abrir la app.",
+                        text = stringResource(R.string.landing_body),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -105,7 +107,7 @@ fun LandingScreen(navController: NavController) {
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text("Iniciar sesion")
+                        Text(stringResource(R.string.login_title))
                     }
 
                     OutlinedButton(
@@ -116,7 +118,7 @@ fun LandingScreen(navController: NavController) {
                             contentColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Registrarse")
+                        Text(stringResource(R.string.register_button))
                     }
                 }
             }

@@ -1,24 +1,43 @@
 package com.undef.superahorro.haronsignorini.ui.screens
 
-import androidx.compose.foundation.layout.*
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,47 +49,86 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.Product
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
-import com.undef.superahorro.haronsignorini.viewmodel.PurchaseViewModel
+import com.undef.superahorro.haronsignorini.ui.components.ConfirmationDialog
+import com.undef.superahorro.haronsignorini.util.createTicketImageUri
+import com.undef.superahorro.haronsignorini.viewmodel.NewPurchaseViewModel
 
 @Composable
 fun NewProductScreen(
     navController: NavController,
     isEditingPurchase: Boolean = false,
     finishRoute: String? = null,
-    purchaseViewModel: PurchaseViewModel
+    newPurchaseViewModel: NewPurchaseViewModel
 ) {
-    var name by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
     var showValidation by remember { mutableStateOf(false) }
     var editingProduct by remember { mutableStateOf<Product?>(null) }
+    var productPendingDelete by remember { mutableStateOf<Product?>(null) }
+    var showDiscardPurchaseDialog by remember { mutableStateOf(false) }
+    var isCameraPermissionDenied by remember { mutableStateOf(false) }
 
-    val nameHasError = showValidation && name.isBlank()
-    val quantityHasError = showValidation && (quantity.isBlank() || quantity.toIntOrNull() ?: 0 <= 0)
-    val priceHasError = showValidation && (price.isBlank() || price.toDoubleOrNull() ?: 0.0 <= 0.0)
+    val context = LocalContext.current
+    val products by newPurchaseViewModel.newPurchaseProducts.collectAsState()
+    val productDraft by newPurchaseViewModel.productDraft.collectAsState()
+    val ticketUri by newPurchaseViewModel.ticketUri.collectAsState()
+    val pendingCameraTicketUri by newPurchaseViewModel.pendingCameraTicketUri.collectAsState()
+    val formState = ProductFormState(
+        code = productDraft.code,
+        name = productDraft.name,
+        description = productDraft.description,
+        quantity = productDraft.quantity,
+        price = productDraft.price
+    )
+    val total = newPurchaseViewModel.getNewPurchaseTotal()
+    val currentProductTotal = formState.quantityValue * formState.priceValue
+    val ticketPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        newPurchaseViewModel.setTicketUri(uri?.toString())
+    }
+    val ticketCameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { wasTaken ->
+        newPurchaseViewModel.confirmTicketPhotoTaken(wasTaken)
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            isCameraPermissionDenied = false
+            val uri = createTicketImageUri(context)
+            newPurchaseViewModel.prepareTicketPhoto(uri.toString())
+            ticketCameraLauncher.launch(uri)
+        } else {
+            isCameraPermissionDenied = true
+        }
+    }
 
-    val products by purchaseViewModel.newPurchaseProducts.collectAsState()
-    val total = purchaseViewModel.getNewPurchaseTotal()
-    val market = purchaseViewModel.getNewPurchaseMarket()
-    val purchaseDate = purchaseViewModel.getNewPurchaseDate()
-    val quantityValue = quantity.toIntOrNull() ?: 0
-    val priceValue = price.toDoubleOrNull() ?: 0.0
-    val currentProductTotal = quantityValue * priceValue
+    fun launchTicketCamera() {
+        isCameraPermissionDenied = false
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            val uri = createTicketImageUri(context)
+            newPurchaseViewModel.prepareTicketPhoto(uri.toString())
+            ticketCameraLauncher.launch(uri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,255 +137,601 @@ fun NewProductScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = if (isEditingPurchase) "Editar productos" else "Agregar productos",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
+                ProductHeaderSection(isEditingPurchase = isEditingPurchase)
             }
-
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        SummaryPill(
-                            modifier = Modifier.weight(1f),
-                            label = "Supermercado",
-                            value = market.ifBlank { "Sin definir" }
-                        )
-                        SummaryPill(
-                            modifier = Modifier.weight(1f),
-                            label = "Fecha",
-                            value = purchaseDate.ifBlank { "Sin definir" }
-                        )
-                    }
-                }
+                PurchaseSummarySection(
+                    market = newPurchaseViewModel.getNewPurchaseMarket(),
+                    purchaseDate = newPurchaseViewModel.getNewPurchaseDate()
+                )
             }
-
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        ProductTextField(
-                            value = name,
-                            onValueChange = { name = it },
-                            label = "Nombre",
-                            placeholder = "Ej: Leche entera",
-                            isError = nameHasError,
-                            supportingText = if (nameHasError) "Campo requerido" else null,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.Inventory2,
-                                    contentDescription = null
+                ProductForm(
+                    formState = formState,
+                    showValidation = showValidation,
+                    editingProduct = editingProduct,
+                    currentProductTotal = currentProductTotal,
+                    purchaseTotal = total,
+                    onNameChange = {
+                        newPurchaseViewModel.setProductDraft(
+                            formState.code,
+                            it,
+                            formState.description,
+                            formState.quantity,
+                            formState.price
+                        )
+                    },
+                    onCodeChange = {
+                        newPurchaseViewModel.setProductDraft(
+                            it,
+                            formState.name,
+                            formState.description,
+                            formState.quantity,
+                            formState.price
+                        )
+                    },
+                    onDescriptionChange = {
+                        newPurchaseViewModel.setProductDraft(
+                            formState.code,
+                            formState.name,
+                            it,
+                            formState.quantity,
+                            formState.price
+                        )
+                    },
+                    onQuantityChange = {
+                        newPurchaseViewModel.setProductDraft(
+                            formState.code,
+                            formState.name,
+                            formState.description,
+                            it,
+                            formState.price
+                        )
+                    },
+                    onPriceChange = {
+                        newPurchaseViewModel.setProductDraft(
+                            formState.code,
+                            formState.name,
+                            formState.description,
+                            formState.quantity,
+                            it
+                        )
+                    },
+                    onSubmit = {
+                        val qty = formState.quantityValue
+                        val prc = formState.priceValue
+                        if (formState.name.isNotBlank() && qty > 0 && prc > 0) {
+                            if (editingProduct != null) {
+                                newPurchaseViewModel.updateProductInNewPurchase(
+                                    editingProduct!!.id,
+                                    formState.code,
+                                    formState.name,
+                                    formState.description,
+                                    qty,
+                                    prc
+                                )
+                                editingProduct = null
+                            } else {
+                                newPurchaseViewModel.addProductToNewPurchase(
+                                    formState.code,
+                                    formState.name,
+                                    formState.description,
+                                    qty,
+                                    prc
                                 )
                             }
-                        )
-
-                        ProductTextField(
-                            value = quantity,
-                            onValueChange = { quantity = it },
-                            label = "Cantidad",
-                            placeholder = "Ej: 2",
-                            isError = quantityHasError,
-                            supportingText = if (quantityHasError) "Debe ser un número mayor a 0" else null,
-                            keyboardType = KeyboardType.Number,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.Numbers,
-                                    contentDescription = null
-                                )
-                            }
-                        )
-
-                        ProductTextField(
-                            value = price,
-                            onValueChange = { price = it },
-                            label = "Precio",
-                            placeholder = "Ej: 1800",
-                            isError = priceHasError,
-                            supportingText = if (priceHasError) "Debe ser un número mayor a 0" else null,
-                            keyboardType = KeyboardType.Number,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.AttachMoney,
-                                    contentDescription = null
-                                )
-                            }
-                        )
-
-                        PurchaseTotalsStrip(
-                            productTotal = currentProductTotal,
-                            purchaseTotal = total
-                        )
-
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                val qty = quantity.toIntOrNull() ?: 0
-                                val prc = price.toDoubleOrNull() ?: 0.0
-                                if (name.isNotBlank() && qty > 0 && prc > 0) {
-                                    if (editingProduct != null) {
-                                        purchaseViewModel.updateProductInNewPurchase(editingProduct!!.id, name, qty, prc)
-                                        editingProduct = null
-                                    } else {
-                                        purchaseViewModel.addProductToNewPurchase(name, qty, prc)
-                                    }
-                                    name = ""
-                                    quantity = ""
-                                    price = ""
-                                    showValidation = false
-                                } else {
-                                    showValidation = true
-                                }
-                            },
-                            shape = MaterialTheme.shapes.medium,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Icon(
-                                imageVector = if (editingProduct != null) Icons.Filled.Save else Icons.Filled.Add,
-                                contentDescription = if (editingProduct != null) "Guardar cambios" else "Agregar producto"
-                            )
-                            Text(
-                                modifier = Modifier.padding(start = 8.dp),
-                                text = if (editingProduct != null) "Guardar cambios" else "Agregar producto"
-                            )
+                            showValidation = false
+                        } else {
+                            showValidation = true
                         }
-
-                        if (editingProduct != null) {
-                            OutlinedButton(
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = {
-                                    editingProduct = null
-                                    name = ""
-                                    quantity = ""
-                                    price = ""
-                                    showValidation = false
-                                },
-                                shape = MaterialTheme.shapes.medium,
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                Text("Cancelar edición")
-                            }
-                        }
+                    },
+                    onCancelEdit = {
+                        editingProduct = null
+                        newPurchaseViewModel.clearProductDraft()
+                        showValidation = false
                     }
-                }
+                )
+            }
+            item {
+                TicketSection(
+                    ticketUri = ticketUri,
+                    isTakingPhoto = pendingCameraTicketUri != null,
+                    isCameraPermissionDenied = isCameraPermissionDenied,
+                    onSelectTicket = {
+                        ticketPickerLauncher.launch("image/*")
+                    },
+                    onTakePhoto = {
+                        launchTicketCamera()
+                    }
+                )
             }
 
             if (products.isNotEmpty()) {
                 item {
-                    Text(
-                        text = "Productos agregados",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    AddedProductsSectionTitle()
                 }
-
                 item {
                     ProductsTable(
                         products = products,
                         onEdit = { product ->
                             editingProduct = product
-                            name = product.name
-                            quantity = product.quantity.toString()
-                            price = product.price.toString()
+                            newPurchaseViewModel.setProductDraft(
+                                code = product.code,
+                                name = product.name,
+                                description = product.description,
+                                quantity = product.quantity.toString(),
+                                price = product.price.toString()
+                            )
                         },
                         onDelete = { product ->
-                            purchaseViewModel.removeProductFromNewPurchase(product.id)
+                            productPendingDelete = product
                         }
                     )
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Total:",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = formatMoney(total),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                item {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            if (isEditingPurchase) {
-                                if (!navController.popBackStack(AppRoutes.PurchaseDetail.route, false)) {
-                                    finishRoute?.let { navController.navigate(it) }
-                                }
-                            } else if (purchaseViewModel.saveNewPurchase()) {
-                                navController.navigate(AppRoutes.Home.route) {
-                                    popUpTo(AppRoutes.Home.route) { inclusive = true }
-                                }
-                            }
-                        },
-                        shape = MaterialTheme.shapes.medium,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Save,
-                            contentDescription = if (isEditingPurchase) "Terminar edicion" else "Guardar compra"
-                        )
-                        Text(
-                            modifier = Modifier.padding(start = 8.dp),
-                            text = if (isEditingPurchase) "Listo" else "Guardar compra"
-                        )
-                    }
                 }
             }
 
             item {
+                PurchaseTotalRow(total = total)
+            }
+            item {
+                SavePurchaseButton(
+                    isEditingPurchase = isEditingPurchase,
+                    onClick = {
+                        if (isEditingPurchase) {
+                            newPurchaseViewModel.saveNewPurchase()
+                            if (!navController.popBackStack(AppRoutes.PurchaseDetail.route, false)) {
+                                finishRoute?.let { navController.navigate(it) }
+                            }
+                        } else if (newPurchaseViewModel.saveNewPurchase()) {
+                            navController.navigate(AppRoutes.Home.route) {
+                                popUpTo(AppRoutes.Home.route) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+            item {
+                DiscardPurchaseButton(
+                    isEditingPurchase = isEditingPurchase,
+                    onClick = { showDiscardPurchaseDialog = true }
+                )
+            }
+
+            item {
+                BackButton(onClick = { navController.popBackStack() })
+            }
+        }
+    }
+
+    productPendingDelete?.let { product ->
+        ConfirmationDialog(
+            title = stringResource(R.string.delete_product),
+            message = stringResource(R.string.delete_product_confirmation, product.name),
+            confirmText = stringResource(R.string.delete),
+            dismissText = stringResource(R.string.cancel),
+            onConfirm = {
+                newPurchaseViewModel.removeProductFromNewPurchase(product.id)
+                if (editingProduct?.id == product.id) {
+                    editingProduct = null
+                    newPurchaseViewModel.clearProductDraft()
+                    showValidation = false
+                }
+                productPendingDelete = null
+            },
+            onDismiss = { productPendingDelete = null }
+        )
+    }
+
+    if (showDiscardPurchaseDialog) {
+        ConfirmationDialog(
+            title = if (isEditingPurchase) {
+                stringResource(R.string.delete_purchase)
+            } else {
+                stringResource(R.string.discard_purchase)
+            },
+            message = if (isEditingPurchase) {
+                stringResource(R.string.delete_current_purchase_confirmation)
+            } else {
+                stringResource(R.string.discard_purchase_confirmation)
+            },
+            confirmText = stringResource(R.string.delete),
+            dismissText = stringResource(R.string.cancel),
+            onConfirm = {
+                showDiscardPurchaseDialog = false
+                if (isEditingPurchase) {
+                    newPurchaseViewModel.deleteCurrentPurchase()
+                } else {
+                    newPurchaseViewModel.clearNewPurchase()
+                }
+                navController.navigate(AppRoutes.Home.route) {
+                    popUpTo(AppRoutes.Home.route) { inclusive = true }
+                }
+            },
+            onDismiss = { showDiscardPurchaseDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun TicketSection(
+    ticketUri: String?,
+    isTakingPhoto: Boolean,
+    isCameraPermissionDenied: Boolean,
+    onSelectTicket: () -> Unit,
+    onTakePhoto: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.purchase_ticket),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            TicketPreview(ticketUri = ticketUri)
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onTakePhoto,
+                enabled = !isTakingPhoto,
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.CameraAlt,
+                    contentDescription = stringResource(R.string.take_ticket_photo)
+                )
+                Text(
+                    modifier = Modifier.padding(start = 8.dp),
+                    text = stringResource(R.string.take_ticket_photo)
+                )
+            }
+            if (isCameraPermissionDenied) {
+                Text(
+                    text = stringResource(R.string.camera_permission_required),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onSelectTicket,
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(stringResource(R.string.select_ticket))
+            }
+        }
+    }
+}
+
+@Composable
+private fun TicketPreview(ticketUri: String?) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(MaterialTheme.shapes.medium),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium
+    ) {
+        if (ticketUri == null) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.ticket_placeholder),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            AsyncImage(
+                model = ticketUri,
+                contentDescription = stringResource(R.string.ticket_preview_description),
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductHeaderSection(isEditingPurchase: Boolean) {
+    Text(
+        text = if (isEditingPurchase) stringResource(R.string.edit_products) else stringResource(R.string.add_products),
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onBackground
+    )
+}
+
+@Composable
+private fun PurchaseSummarySection(
+    market: String,
+    purchaseDate: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SummaryPill(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.market),
+                value = market.ifBlank { stringResource(R.string.undefined) }
+            )
+            SummaryPill(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.date),
+                value = purchaseDate.ifBlank { stringResource(R.string.undefined) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductForm(
+    formState: ProductFormState,
+    showValidation: Boolean,
+    editingProduct: Product?,
+    currentProductTotal: Double,
+    purchaseTotal: Double,
+    onCodeChange: (String) -> Unit,
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onQuantityChange: (String) -> Unit,
+    onPriceChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onCancelEdit: () -> Unit
+) {
+    val nameHasError = showValidation && formState.name.isBlank()
+    val quantityHasError = showValidation && formState.quantityValue <= 0
+    val priceHasError = showValidation && formState.priceValue <= 0.0
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            ProductTextField(
+                value = formState.code,
+                onValueChange = onCodeChange,
+                label = stringResource(R.string.product_code),
+                placeholder = stringResource(R.string.product_code_placeholder),
+                isError = false,
+                supportingText = null,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Filled.Code, contentDescription = null)
+                }
+            )
+            ProductTextField(
+                value = formState.name,
+                onValueChange = onNameChange,
+                label = stringResource(R.string.product_name),
+                placeholder = stringResource(R.string.product_placeholder),
+                isError = nameHasError,
+                supportingText = if (nameHasError) stringResource(R.string.field_required) else null,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Filled.Inventory2, contentDescription = null)
+                }
+            )
+            ProductTextField(
+                value = formState.description,
+                onValueChange = onDescriptionChange,
+                label = stringResource(R.string.product_description),
+                placeholder = stringResource(R.string.product_description_placeholder),
+                isError = false,
+                supportingText = null,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Filled.Description, contentDescription = null)
+                }
+            )
+            ProductTextField(
+                value = formState.quantity,
+                onValueChange = onQuantityChange,
+                label = stringResource(R.string.quantity),
+                placeholder = stringResource(R.string.quantity_placeholder),
+                isError = quantityHasError,
+                supportingText = if (quantityHasError) stringResource(R.string.number_greater_than_zero) else null,
+                keyboardType = KeyboardType.Number,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Filled.Numbers, contentDescription = null)
+                }
+            )
+            ProductTextField(
+                value = formState.price,
+                onValueChange = onPriceChange,
+                label = stringResource(R.string.price),
+                placeholder = stringResource(R.string.price_placeholder),
+                isError = priceHasError,
+                supportingText = if (priceHasError) stringResource(R.string.number_greater_than_zero) else null,
+                keyboardType = KeyboardType.Number,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Filled.AttachMoney, contentDescription = null)
+                }
+            )
+            PurchaseTotalsStrip(
+                productTotal = currentProductTotal,
+                purchaseTotal = purchaseTotal
+            )
+            ProductSubmitButton(
+                editingProduct = editingProduct,
+                onClick = onSubmit
+            )
+            if (editingProduct != null) {
                 OutlinedButton(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { navController.popBackStack() },
+                    onClick = onCancelEdit,
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text("Volver")
+                    Text(stringResource(R.string.cancel_edit))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ProductSubmitButton(
+    editingProduct: Product?,
+    onClick: () -> Unit
+) {
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        val text = if (editingProduct != null) {
+            stringResource(R.string.save_changes)
+        } else {
+            stringResource(R.string.add_product)
+        }
+        Icon(
+            imageVector = if (editingProduct != null) Icons.Filled.Save else Icons.Filled.Add,
+            contentDescription = text
+        )
+        Text(
+            modifier = Modifier.padding(start = 8.dp),
+            text = text
+        )
+    }
+}
+
+@Composable
+private fun AddedProductsSectionTitle() {
+    Text(
+        text = stringResource(R.string.added_products),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onBackground
+    )
+}
+
+@Composable
+private fun PurchaseTotalRow(total: Double) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "${stringResource(R.string.total)}:",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = formatMoney(total),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun SavePurchaseButton(
+    isEditingPurchase: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        val text = if (isEditingPurchase) {
+            stringResource(R.string.finish)
+        } else {
+            stringResource(R.string.save_purchase)
+        }
+        Icon(
+            imageVector = Icons.Filled.Save,
+            contentDescription = if (isEditingPurchase) {
+                stringResource(R.string.finish_editing)
+            } else {
+                stringResource(R.string.save_purchase)
+            }
+        )
+        Text(
+            modifier = Modifier.padding(start = 8.dp),
+            text = text
+        )
+    }
+}
+
+@Composable
+private fun DiscardPurchaseButton(
+    isEditingPurchase: Boolean,
+    onClick: () -> Unit
+) {
+    OutlinedButton(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.error
+        )
+    ) {
+        val text = if (isEditingPurchase) {
+            stringResource(R.string.delete_purchase)
+        } else {
+            stringResource(R.string.discard_purchase)
+        }
+        Icon(
+            imageVector = Icons.Filled.Delete,
+            contentDescription = text
+        )
+        Text(
+            modifier = Modifier.padding(start = 8.dp),
+            text = text
+        )
+    }
+}
+
+@Composable
+private fun BackButton(onClick: () -> Unit) {
+    OutlinedButton(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.primary
+        )
+    ) {
+        Text(stringResource(R.string.back))
     }
 }
 
@@ -381,12 +785,12 @@ private fun PurchaseTotalsStrip(
     ) {
         SummaryPill(
             modifier = Modifier.weight(1f),
-            label = "Total producto",
+            label = stringResource(R.string.total_product),
             value = formatMoney(productTotal)
         )
         SummaryPill(
             modifier = Modifier.weight(1f),
-            label = "Total compra",
+            label = stringResource(R.string.total_purchase),
             value = formatMoney(purchaseTotal)
         )
     }
@@ -401,9 +805,7 @@ private fun SummaryPill(
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -433,16 +835,13 @@ private fun ProductsTable(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             ProductsTableHeader()
-
             products.forEachIndexed { index, product ->
                 ProductTableRow(
                     product = product,
@@ -469,27 +868,27 @@ private fun ProductsTableHeader() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProductNameCell(
-                text = "Producto",
+                text = stringResource(R.string.product),
                 header = true,
                 modifier = Modifier.weight(1f)
             )
             CompactTableCell(
-                text = "Cant.",
+                text = stringResource(R.string.quantity_short),
                 width = 42.dp,
                 header = true
             )
             CompactTableCell(
-                text = "Precio",
+                text = stringResource(R.string.price),
                 width = 50.dp,
                 header = true
             )
             CompactTableCell(
-                text = "Subt.",
+                text = stringResource(R.string.subtotal_short),
                 width = 50.dp,
                 header = true
             )
             CompactTableCell(
-                text = "Acc.",
+                text = stringResource(R.string.actions_short),
                 width = 56.dp,
                 header = true
             )
@@ -547,7 +946,7 @@ private fun ProductTableRow(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
-                        contentDescription = "Editar producto",
+                        contentDescription = stringResource(R.string.edit_product),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(16.dp)
                     )
@@ -558,7 +957,7 @@ private fun ProductTableRow(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = "Eliminar producto",
+                        contentDescription = stringResource(R.string.delete_product),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(16.dp)
                     )
@@ -619,6 +1018,17 @@ private fun CompactTableCell(
         maxLines = 1,
         overflow = TextOverflow.Clip
     )
+}
+
+private data class ProductFormState(
+    val code: String = "",
+    val name: String = "",
+    val description: String = "",
+    val quantity: String = "",
+    val price: String = ""
+) {
+    val quantityValue: Int = quantity.toIntOrNull() ?: 0
+    val priceValue: Double = price.toDoubleOrNull() ?: 0.0
 }
 
 private fun formatMoney(amount: Double): String {

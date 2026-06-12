@@ -17,12 +17,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,12 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.MockAccount
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
 import com.undef.superahorro.haronsignorini.viewmodel.AuthResult
@@ -45,12 +49,15 @@ fun LoginScreen(
     navController: NavController,
     quickAccounts: List<MockAccount>,
     onLogin: (String, String) -> AuthResult,
-    onQuickLogin: (MockAccount) -> AuthResult
+    onQuickLogin: (MockAccount) -> AuthResult,
+    onPasswordRecovery: (String, String) -> AuthResult
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showErrors by remember { mutableStateOf(false) }
     var authError by remember { mutableStateOf<String?>(null) }
+    var showRecoveryDialog by remember { mutableStateOf(false) }
+    var recoveryMessage by remember { mutableStateOf<String?>(null) }
 
     val emailHasError = showErrors && !isValidEmail(email)
     val passwordHasError = showErrors && password.length < 6
@@ -79,13 +86,13 @@ fun LoginScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "Iniciar sesion",
+                            text = stringResource(R.string.login_title),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Ingresa para ver tus gastos.",
+                            text = stringResource(R.string.login_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -94,10 +101,10 @@ fun LoginScreen(
                     AuthTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = "Email",
-                        placeholder = "tu@email.com",
+                        label = stringResource(R.string.email),
+                        placeholder = stringResource(R.string.email_placeholder),
                         isError = emailHasError,
-                        supportingText = if (emailHasError) "Ingresa un email valido" else null,
+                        supportingText = if (emailHasError) stringResource(R.string.invalid_email) else null,
                         keyboardType = KeyboardType.Email,
                         leadingIcon = {
                             Icon(
@@ -110,10 +117,10 @@ fun LoginScreen(
                     AuthTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = "Password",
-                        placeholder = "Tu password",
+                        label = stringResource(R.string.password),
+                        placeholder = stringResource(R.string.password_placeholder),
                         isError = passwordHasError,
-                        supportingText = if (passwordHasError) "Minimo 6 caracteres" else null,
+                        supportingText = if (passwordHasError) stringResource(R.string.minimum_6_chars) else null,
                         keyboardType = KeyboardType.Password,
                         visualTransformation = PasswordVisualTransformation(),
                         leadingIcon = {
@@ -129,6 +136,14 @@ fun LoginScreen(
                             text = it,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    recoveryMessage?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -150,12 +165,12 @@ fun LoginScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text("Login")
+                        Text(stringResource(R.string.login_button))
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Cuentas mock para testear",
+                            text = stringResource(R.string.login_quick_accounts),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -174,7 +189,7 @@ fun LoginScreen(
                                     contentColor = MaterialTheme.colorScheme.primary
                                 )
                             ) {
-                                Text("Entrar como ${account.email}")
+                                Text(stringResource(R.string.login_as, account.email))
                             }
                         }
                     }
@@ -187,12 +202,115 @@ fun LoginScreen(
                             contentColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Ir a registro")
+                        Text(stringResource(R.string.go_to_register))
+                    }
+
+                    TextButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            recoveryMessage = null
+                            showRecoveryDialog = true
+                        }
+                    ) {
+                        Text(stringResource(R.string.forgot_password))
                     }
                 }
             }
         }
     }
+
+    if (showRecoveryDialog) {
+        PasswordRecoveryDialog(
+            initialEmail = email,
+            onRecover = onPasswordRecovery,
+            onRecovered = {
+                recoveryMessage = it
+                showRecoveryDialog = false
+            },
+            onDismiss = { showRecoveryDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun PasswordRecoveryDialog(
+    initialEmail: String,
+    onRecover: (String, String) -> AuthResult,
+    onRecovered: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var recoveryEmail by remember { mutableStateOf(initialEmail) }
+    var newPassword by remember { mutableStateOf("") }
+    var repeatedPassword by remember { mutableStateOf("") }
+    var recoveryError by remember { mutableStateOf<String?>(null) }
+    val successMessage = stringResource(R.string.password_recovery_success)
+    val newPasswordsDoNotMatch = stringResource(R.string.new_passwords_do_not_match)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.recover_password)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                AuthTextField(
+                    value = recoveryEmail,
+                    onValueChange = { recoveryEmail = it },
+                    label = stringResource(R.string.email),
+                    placeholder = stringResource(R.string.email_placeholder),
+                    isError = false,
+                    supportingText = null,
+                    keyboardType = KeyboardType.Email
+                )
+                AuthTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = stringResource(R.string.new_password),
+                    placeholder = stringResource(R.string.create_password_placeholder),
+                    isError = false,
+                    supportingText = null,
+                    keyboardType = KeyboardType.Password,
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                AuthTextField(
+                    value = repeatedPassword,
+                    onValueChange = { repeatedPassword = it },
+                    label = stringResource(R.string.repeat_new_password),
+                    placeholder = stringResource(R.string.create_password_placeholder),
+                    isError = false,
+                    supportingText = null,
+                    keyboardType = KeyboardType.Password,
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                recoveryError?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (newPassword != repeatedPassword) {
+                        recoveryError = newPasswordsDoNotMatch
+                        return@TextButton
+                    }
+                    when (val result = onRecover(recoveryEmail, newPassword)) {
+                        AuthResult.Success -> onRecovered(successMessage)
+                        is AuthResult.Error -> recoveryError = result.message
+                    }
+                }
+            ) {
+                Text(stringResource(R.string.save_password))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable

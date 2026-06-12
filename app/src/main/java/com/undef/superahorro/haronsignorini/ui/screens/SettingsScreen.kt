@@ -21,9 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 
 @Composable
 fun SettingsScreen(
@@ -43,13 +45,13 @@ fun SettingsScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Configuracion",
+                    text = stringResource(R.string.settings),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Preferencias visuales de la aplicacion.",
+                    text = stringResource(R.string.settings_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -67,8 +69,8 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     SettingSwitchRow(
-                        title = "Modo oscuro",
-                        subtitle = "Cambia entre el tema claro y oscuro.",
+                        title = stringResource(R.string.dark_mode),
+                        subtitle = stringResource(R.string.dark_mode_subtitle),
                         checked = darkModeEnabled,
                         onCheckedChange = onDarkModeChange,
                         icon = {
@@ -89,7 +91,7 @@ fun SettingsScreen(
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("Volver")
+                Text(stringResource(R.string.back))
             }
         }
     }

@@ -23,9 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
 import kotlinx.coroutines.delay
 
@@ -86,7 +88,7 @@ fun SplashScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ShoppingCart,
-                        contentDescription = "SuperAhorro",
+                        contentDescription = stringResource(R.string.app_name),
                         modifier = Modifier.size(54.dp),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -96,13 +98,13 @@ fun SplashScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "SuperAhorro",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Tus compras, mas claras.",
+                        text = stringResource(R.string.splash_tagline),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

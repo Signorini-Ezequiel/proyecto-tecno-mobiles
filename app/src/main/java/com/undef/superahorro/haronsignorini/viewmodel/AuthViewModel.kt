@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.MockAccount
 import com.undef.superahorro.haronsignorini.data.SessionManager
 
@@ -17,7 +18,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     var userEmail by mutableStateOf(sessionManager.getEmail())
         private set
 
-    var username by mutableStateOf(sessionManager.getCurrentAccount()?.username ?: "Invitado")
+    var username by mutableStateOf(sessionManager.getCurrentAccount()?.username ?: string(R.string.guest))
         private set
 
     val quickAccounts: List<MockAccount>
@@ -29,11 +30,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         if (validationError != null) return AuthResult.Error(validationError)
 
         if (!sessionManager.accountExists(normalizedEmail)) {
-            return AuthResult.Error("No existe una cuenta con ese email.")
+            return AuthResult.Error(string(R.string.account_not_found))
         }
 
         if (!sessionManager.validateCredentials(normalizedEmail, password)) {
-            return AuthResult.Error("La contrasena no coincide.")
+            return AuthResult.Error(string(R.string.password_mismatch))
         }
 
         saveLoggedSession(normalizedEmail)
@@ -47,11 +48,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         if (validationError != null) return AuthResult.Error(validationError)
 
         if (trimmedUsername.length < 3) {
-            return AuthResult.Error("El nombre de usuario debe tener al menos 3 caracteres.")
+            return AuthResult.Error(string(R.string.username_min_3_error))
         }
 
         if (sessionManager.accountExists(normalizedEmail)) {
-            return AuthResult.Error("Ya existe una cuenta con ese email.")
+            return AuthResult.Error(string(R.string.account_already_exists))
         }
 
         sessionManager.saveAccount(normalizedEmail, password, trimmedUsername)
@@ -66,7 +67,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun updateUsername(newUsername: String): AuthResult {
         val trimmedUsername = newUsername.trim()
         if (trimmedUsername.length < 3) {
-            return AuthResult.Error("El nombre de usuario debe tener al menos 3 caracteres.")
+            return AuthResult.Error(string(R.string.username_min_3_error))
         }
 
         sessionManager.updateUsername(userEmail, trimmedUsername)
@@ -79,17 +80,30 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         if (validationError != null) return AuthResult.Error(validationError)
 
         if (!sessionManager.validateCredentials(userEmail, currentPassword)) {
-            return AuthResult.Error("La contrasena actual no coincide.")
+            return AuthResult.Error(string(R.string.current_password_mismatch))
         }
 
         sessionManager.updatePassword(userEmail, newPassword)
         return AuthResult.Success
     }
 
+    fun recoverPassword(email: String, newPassword: String): AuthResult {
+        val normalizedEmail = email.trim()
+        val validationError = validateEmailAndPassword(normalizedEmail, newPassword)
+        if (validationError != null) return AuthResult.Error(validationError)
+
+        if (!sessionManager.accountExists(normalizedEmail)) {
+            return AuthResult.Error(string(R.string.account_not_found))
+        }
+
+        sessionManager.updatePassword(normalizedEmail, newPassword)
+        return AuthResult.Success
+    }
+
     fun logout() {
         sessionManager.clearSession()
         userEmail = sessionManager.getEmail()
-        username = "Invitado"
+        username = string(R.string.guest)
         isLoggedIn = false
     }
 
@@ -102,12 +116,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun validateEmailAndPassword(email: String, password: String): String? {
         if (!EMAIL_REGEX.matches(email)) {
-            return "Ingresa un email valido."
+            return string(R.string.invalid_email_period)
         }
         if (password.length < 6) {
-            return "La contrasena debe tener al menos 6 caracteres."
+            return string(R.string.password_min_6)
         }
         return null
+    }
+
+    private fun string(resId: Int): String {
+        return getApplication<Application>().getString(resId)
     }
 
     private companion object {

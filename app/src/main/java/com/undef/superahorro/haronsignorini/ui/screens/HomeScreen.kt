@@ -28,14 +28,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.Purchase
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
-import com.undef.superahorro.haronsignorini.viewmodel.PurchaseViewModel
+import com.undef.superahorro.haronsignorini.viewmodel.PurchaseListViewModel
 
 @Composable
 fun HomeScreen(
     navController: NavController,
-    purchaseViewModel: PurchaseViewModel = viewModel()
+    purchaseViewModel: PurchaseListViewModel = viewModel()
 ) {
     val purchases by purchaseViewModel.purchases.collectAsState()
     val sortedPurchases = purchases.sortedWith(
@@ -56,10 +58,10 @@ fun HomeScreen(
                 icon = {
                     Icon(
                         imageVector = Icons.Filled.Add,
-                        contentDescription = "Agregar compra"
+                        contentDescription = stringResource(R.string.add_purchase)
                     )
                 },
-                text = { Text("Compra") }
+                text = { Text(stringResource(R.string.purchase_fab)) }
             )
         }
     ) { innerPadding ->
@@ -73,13 +75,13 @@ fun HomeScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Hola, Matias",
+                        text = stringResource(R.string.hello_user),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Este es tu resumen de supermercado.",
+                        text = stringResource(R.string.home_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -88,19 +90,19 @@ fun HomeScreen(
 
             item {
                 SummaryCard(
-                    title = "Gasto total del mes",
+                    title = stringResource(R.string.monthly_total_spending),
                     value = formatMoney(totalMonth),
-                    subtitle = "${purchases.size} compras registradas",
+                    subtitle = stringResource(R.string.registered_purchases, purchases.size),
                     highlighted = true
                 )
             }
 
             item {
                 SummaryCard(
-                    title = "Ultimo gasto",
-                    value = lastPurchase?.let { formatMoney(it.total) } ?: "$0.0",
+                    title = stringResource(R.string.last_spending),
+                    value = lastPurchase?.let { formatMoney(it.total) } ?: formatMoney(0.0),
                     subtitle = lastPurchase?.let { "${it.marketName} - ${it.date}" }
-                        ?: "Sin compras cargadas"
+                        ?: stringResource(R.string.no_purchases_loaded)
                 )
             }
 
@@ -111,13 +113,13 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Ultimas compras",
+                        text = stringResource(R.string.latest_purchases),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Ver todas",
+                        text = stringResource(R.string.see_all),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
@@ -226,7 +228,7 @@ private fun PurchasePreviewCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${purchase.date} - ${purchase.productsCount} productos",
+                    text = "${purchase.date} - ${stringResource(R.string.products_count, purchase.productsCount)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

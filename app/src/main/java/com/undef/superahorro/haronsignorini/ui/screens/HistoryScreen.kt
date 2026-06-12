@@ -22,19 +22,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.Purchase
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
-import com.undef.superahorro.haronsignorini.viewmodel.PurchaseViewModel
+import com.undef.superahorro.haronsignorini.viewmodel.PurchaseListViewModel
 
 @Composable
 fun HistoryScreen(
     navController: NavController,
-    purchaseViewModel: PurchaseViewModel = viewModel()
+    purchaseViewModel: PurchaseListViewModel = viewModel()
 ) {
     val purchases by purchaseViewModel.purchases.collectAsState()
+    val context = LocalContext.current
     val groupedPurchases = purchases
         .sortedByDescending { it.sortKey() }
-        .groupBy { it.monthLabel() }
+        .groupBy { it.monthLabel(context::getString) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -49,13 +53,13 @@ fun HistoryScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Historial",
+                        text = stringResource(R.string.history),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Compras agrupadas por mes.",
+                        text = stringResource(R.string.history_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -150,24 +154,24 @@ private fun Purchase.sortKey(): Int {
     return year * 10000 + month * 100 + day
 }
 
-private fun Purchase.monthLabel(): String {
+private fun Purchase.monthLabel(string: (Int) -> String): String {
     val parts = date.split("/")
-    val month = parts.getOrNull(1)?.toIntOrNull() ?: return "Sin fecha"
-    val year = parts.getOrNull(2) ?: return "Sin fecha"
+    val month = parts.getOrNull(1)?.toIntOrNull() ?: return string(R.string.no_date)
+    val year = parts.getOrNull(2) ?: return string(R.string.no_date)
     val monthName = when (month) {
-        1 -> "Enero"
-        2 -> "Febrero"
-        3 -> "Marzo"
-        4 -> "Abril"
-        5 -> "Mayo"
-        6 -> "Junio"
-        7 -> "Julio"
-        8 -> "Agosto"
-        9 -> "Septiembre"
-        10 -> "Octubre"
-        11 -> "Noviembre"
-        12 -> "Diciembre"
-        else -> return "Sin fecha"
+        1 -> string(R.string.month_january)
+        2 -> string(R.string.month_february)
+        3 -> string(R.string.month_march)
+        4 -> string(R.string.month_april)
+        5 -> string(R.string.month_may)
+        6 -> string(R.string.month_june)
+        7 -> string(R.string.month_july)
+        8 -> string(R.string.month_august)
+        9 -> string(R.string.month_september)
+        10 -> string(R.string.month_october)
+        11 -> string(R.string.month_november)
+        12 -> string(R.string.month_december)
+        else -> return string(R.string.no_date)
     }
     return "$monthName $year"
 }

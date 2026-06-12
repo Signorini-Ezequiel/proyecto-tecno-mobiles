@@ -27,7 +27,8 @@ import com.undef.superahorro.haronsignorini.ui.screens.SettingsScreen
 import com.undef.superahorro.haronsignorini.ui.screens.SplashScreen
 import com.undef.superahorro.haronsignorini.ui.screens.StatsScreen
 import com.undef.superahorro.haronsignorini.viewmodel.AuthViewModel
-import com.undef.superahorro.haronsignorini.viewmodel.PurchaseViewModel
+import com.undef.superahorro.haronsignorini.viewmodel.NewPurchaseViewModel
+import com.undef.superahorro.haronsignorini.viewmodel.PurchaseListViewModel
 
 @Composable
 fun AppNavigation(
@@ -35,7 +36,8 @@ fun AppNavigation(
     onDarkModeChange: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
-    val purchaseViewModel: PurchaseViewModel = viewModel()
+    val purchaseListViewModel: PurchaseListViewModel = viewModel()
+    val newPurchaseViewModel: NewPurchaseViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
     val backStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry.value?.destination?.route
@@ -76,7 +78,10 @@ fun AppNavigation(
                     navController = navController,
                     quickAccounts = authViewModel.quickAccounts,
                     onLogin = { email, password -> authViewModel.login(email, password) },
-                    onQuickLogin = { account -> authViewModel.loginWithMockAccount(account) }
+                    onQuickLogin = { account -> authViewModel.loginWithMockAccount(account) },
+                    onPasswordRecovery = { email, newPassword ->
+                        authViewModel.recoverPassword(email, newPassword)
+                    }
                 )
             }
             composable(AppRoutes.Register.route) {
@@ -90,19 +95,19 @@ fun AppNavigation(
             composable(AppRoutes.Home.route) {
                 HomeScreen(
                     navController = navController,
-                    purchaseViewModel = purchaseViewModel
+                    purchaseViewModel = purchaseListViewModel
                 )
             }
             composable(AppRoutes.NewPurchase.route) {
                 NewPurchaseScreen(
                     navController = navController,
-                    purchaseViewModel = purchaseViewModel
+                    newPurchaseViewModel = newPurchaseViewModel
                 )
             }
             composable(AppRoutes.NewProduct.route) {
                 NewProductScreen(
                     navController = navController,
-                    purchaseViewModel = purchaseViewModel
+                    newPurchaseViewModel = newPurchaseViewModel
                 )
             }
             composable(
@@ -112,9 +117,9 @@ fun AppNavigation(
                 val purchaseId = backStackEntry.arguments?.getInt("purchaseId") ?: 0
                 NewPurchaseScreen(
                     navController = navController,
-                    purchase = purchaseViewModel.getPurchaseById(purchaseId),
+                    purchase = purchaseListViewModel.getPurchaseById(purchaseId),
                     isEditing = true,
-                    purchaseViewModel = purchaseViewModel
+                    newPurchaseViewModel = newPurchaseViewModel
                 )
             }
             composable(
@@ -126,13 +131,13 @@ fun AppNavigation(
                     navController = navController,
                     isEditingPurchase = true,
                     finishRoute = AppRoutes.PurchaseDetail.createRoute(purchaseId),
-                    purchaseViewModel = purchaseViewModel
+                    newPurchaseViewModel = newPurchaseViewModel
                 )
             }
             composable(AppRoutes.PurchaseList.route) {
                 PurchaseListScreen(
                     navController = navController,
-                    purchaseViewModel = purchaseViewModel
+                    purchaseViewModel = purchaseListViewModel
                 )
             }
             composable(
@@ -142,17 +147,18 @@ fun AppNavigation(
                 val purchaseId = backStackEntry.arguments?.getInt("purchaseId") ?: 0
                 PurchaseDetailScreen(
                     navController = navController,
-                    purchase = purchaseViewModel.getPurchaseById(purchaseId)
+                    purchase = purchaseListViewModel.getPurchaseById(purchaseId),
+                    purchaseListViewModel = purchaseListViewModel
                 )
             }
             composable(AppRoutes.History.route) {
                 HistoryScreen(
                     navController = navController,
-                    purchaseViewModel = purchaseViewModel
+                    purchaseViewModel = purchaseListViewModel
                 )
             }
             composable(AppRoutes.Stats.route) {
-                StatsScreen(purchaseViewModel = purchaseViewModel)
+                StatsScreen(purchaseViewModel = purchaseListViewModel)
             }
             composable(AppRoutes.Profile.route) {
                 ProfileScreen(

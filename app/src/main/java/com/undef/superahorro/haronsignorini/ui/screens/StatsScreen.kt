@@ -1,5 +1,6 @@
 package com.undef.superahorro.haronsignorini.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -17,8 +18,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -37,19 +41,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.undef.superahorro.haronsignorini.viewmodel.PurchaseViewModel
+import com.undef.superahorro.haronsignorini.R
+import com.undef.superahorro.haronsignorini.viewmodel.PurchaseListViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
+fun StatsScreen(purchaseViewModel: PurchaseListViewModel = viewModel()) {
     val purchases by purchaseViewModel.purchases.collectAsState()
+    val context = LocalContext.current
     val availableMonths = purchases
         .mapNotNull { it.date.toMonthBucketOrNull() }
         .distinct()
@@ -66,7 +74,7 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
         .mapValues { entry -> entry.value.sumOf { it.total } }
         .toList()
         .sortedByDescending { it.second }
-    val selectedMonthLabel = selectedMonth?.label ?: "Sin datos"
+    val selectedMonthLabel = selectedMonth?.label ?: context.getString(R.string.no_data)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -80,21 +88,8 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "Estadisticas",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Analisis visual por mes con datos simulados.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                StatisticsHeader()
             }
-
             item {
                 MonthSelectorCard(
                     selectedMonthLabel = selectedMonthLabel,
@@ -112,24 +107,16 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
                     }
                 )
             }
-
             item {
-                TotalSpentCard(
+                StatisticsCards(
                     totalSpent = totalSpent,
                     purchasesCount = selectedMonthPurchases.size,
                     currentMonthLabel = selectedMonthLabel
                 )
             }
-
             item {
-                Text(
-                    text = "Gasto por supermercado",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                MarketSpendingTitle()
             }
-
             items(
                 items = spendingByMarket,
                 key = { it.first }
@@ -139,11 +126,28 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
                     total = total
                 )
             }
-
             item {
-                PieChartCard(
+                ChartsSection(
                     spendingByMarket = spendingByMarket,
                     totalSpent = totalSpent
+                )
+            }
+            item {
+                ExportDataButton(
+                    enabled = purchases.isNotEmpty(),
+                    onClick = {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/csv"
+                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.export_data))
+                            putExtra(Intent.EXTRA_TEXT, purchases.toCsv())
+                        }
+                        context.startActivity(
+                            Intent.createChooser(
+                                sendIntent,
+                                context.getString(R.string.export_data)
+                            )
+                        )
+                    }
                 )
             }
         }
@@ -151,7 +155,24 @@ fun StatsScreen(purchaseViewModel: PurchaseViewModel = viewModel()) {
 }
 
 @Composable
-private fun TotalSpentCard(
+private fun StatisticsHeader() {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = stringResource(R.string.stats),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = stringResource(R.string.stats_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun StatisticsCards(
     totalSpent: Double,
     purchasesCount: Int,
     currentMonthLabel: String
@@ -168,7 +189,7 @@ private fun TotalSpentCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Gasto total",
+                text = stringResource(R.string.total_spent),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
             )
@@ -179,7 +200,7 @@ private fun TotalSpentCard(
                 color = MaterialTheme.colorScheme.onPrimary
             )
             Text(
-                text = "$purchasesCount compras registradas en $currentMonthLabel",
+                text = stringResource(R.string.registered_purchases_in_month, purchasesCount, currentMonthLabel),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
             )
@@ -215,7 +236,7 @@ private fun MonthSelectorCard(
             ) {
                 Icon(
                     imageVector = Icons.Filled.ChevronLeft,
-                    contentDescription = "Mes anterior"
+                    contentDescription = stringResource(R.string.previous_month)
                 )
             }
             Column(
@@ -223,7 +244,7 @@ private fun MonthSelectorCard(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = "Mes seleccionado",
+                    text = stringResource(R.string.selected_month),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -240,11 +261,21 @@ private fun MonthSelectorCard(
             ) {
                 Icon(
                     imageVector = Icons.Filled.ChevronRight,
-                    contentDescription = "Mes siguiente"
+                    contentDescription = stringResource(R.string.next_month)
                 )
             }
         }
     }
+}
+
+@Composable
+private fun MarketSpendingTitle() {
+    Text(
+        text = stringResource(R.string.market_spending),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onBackground
+    )
 }
 
 @Composable
@@ -288,7 +319,7 @@ private fun MarketSpendingRow(
 }
 
 @Composable
-private fun PieChartCard(
+private fun ChartsSection(
     spendingByMarket: List<Pair<String, Double>>,
     totalSpent: Double
 ) {
@@ -314,7 +345,7 @@ private fun PieChartCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Grafico de torta",
+                text = stringResource(R.string.pie_chart),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -328,7 +359,7 @@ private fun PieChartCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Todavia no hay datos para visualizar.",
+                        text = stringResource(R.string.no_chart_data),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -394,7 +425,11 @@ private fun PieChartCard(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "${formatMoney(total)} · $percentage%",
+                                        text = stringResource(
+                                            R.string.chart_legend_value,
+                                            formatMoney(total),
+                                            percentage
+                                        ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -415,6 +450,76 @@ private fun formatMoney(amount: Double): String {
     return "${'$'}${amount.toInt()}"
 }
 
+@Composable
+private fun ExportDataButton(
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        enabled = enabled,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        Icon(
+            imageVector = Icons.Filled.IosShare,
+            contentDescription = stringResource(R.string.export_data)
+        )
+        Text(
+            modifier = Modifier.padding(start = 8.dp),
+            text = stringResource(R.string.export_data)
+        )
+    }
+}
+
+private fun List<com.undef.superahorro.haronsignorini.data.Purchase>.toCsv(): String {
+    val header = "id,fecha,hora,supermercado,total,producto_codigo,producto_nombre,producto_descripcion,cantidad,precio"
+    val rows = flatMap { purchase ->
+        if (purchase.products.isEmpty()) {
+            listOf(
+                listOf(
+                    purchase.id.toString(),
+                    purchase.date,
+                    purchase.time,
+                    purchase.marketName,
+                    purchase.total.toString(),
+                    "",
+                    "",
+                    "",
+                    "",
+                    ""
+                ).toCsvLine()
+            )
+        } else {
+            purchase.products.map { product ->
+                listOf(
+                    purchase.id.toString(),
+                    purchase.date,
+                    purchase.time,
+                    purchase.marketName,
+                    purchase.total.toString(),
+                    product.code,
+                    product.name,
+                    product.description,
+                    product.quantity.toString(),
+                    product.price.toString()
+                ).toCsvLine()
+            }
+        }
+    }
+    return (listOf(header) + rows).joinToString("\n")
+}
+
+private fun List<String>.toCsvLine(): String {
+    return joinToString(",") { value ->
+        "\"${value.replace("\"", "\"\"")}\""
+    }
+}
+
 private data class MonthBucket(
     val year: Int,
     val month: Int,
@@ -433,9 +538,10 @@ private fun String.toMonthBucketOrNull(): MonthBucket? {
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val parsedDate = formatter.parse(this) ?: return null
     val purchaseCalendar = Calendar.getInstance().apply { time = parsedDate }
-    val monthFormatter = SimpleDateFormat("MMMM yyyy", Locale("es", "AR"))
+    val displayLocale = Locale.forLanguageTag("es-AR")
+    val monthFormatter = SimpleDateFormat("MMMM yyyy", displayLocale)
     val label = monthFormatter.format(parsedDate)
-        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("es", "AR")) else it.toString() }
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(displayLocale) else it.toString() }
     return MonthBucket(
         year = purchaseCalendar.get(Calendar.YEAR),
         month = purchaseCalendar.get(Calendar.MONTH) + 1,

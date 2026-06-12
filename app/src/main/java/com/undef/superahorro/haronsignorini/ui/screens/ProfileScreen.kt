@@ -35,10 +35,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
+import com.undef.superahorro.haronsignorini.ui.components.ConfirmationDialog
 import com.undef.superahorro.haronsignorini.viewmodel.AuthResult
 
 @Composable
@@ -53,6 +56,19 @@ fun ProfileScreen(
     var usernameInput by remember(username) { mutableStateOf(username) }
     var usernameMessage by remember { mutableStateOf<String?>(null) }
     var usernameIsError by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    val usernameUpdatedMessage = stringResource(R.string.username_updated)
+    val initialsFallback = stringResource(R.string.user_initials_fallback)
+
+    fun logoutAndNavigate() {
+        onLogout()
+        navController.navigate(AppRoutes.Landing.route) {
+            popUpTo(AppRoutes.Home.route) {
+                inclusive = true
+            }
+            launchSingleTop = true
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -67,13 +83,13 @@ fun ProfileScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Perfil",
+                    text = stringResource(R.string.profile),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Datos de tu cuenta.",
+                    text = stringResource(R.string.profile_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -103,7 +119,7 @@ fun ProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = username.initials(),
+                            text = username.initials(initialsFallback),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimary
@@ -118,7 +134,7 @@ fun ProfileScreen(
                                 usernameInput = it
                                 usernameMessage = null
                             },
-                            label = { Text("Nombre de usuario") },
+                            label = { Text(stringResource(R.string.username)) },
                             singleLine = true,
                             shape = MaterialTheme.shapes.medium,
                             colors = profileTextFieldColors()
@@ -129,7 +145,7 @@ fun ProfileScreen(
                                 when (val result = onUsernameChange(usernameInput)) {
                                     AuthResult.Success -> {
                                         usernameIsError = false
-                                        usernameMessage = "Nombre actualizado."
+                                        usernameMessage = usernameUpdatedMessage
                                         isEditingUsername = false
                                     }
                                     is AuthResult.Error -> {
@@ -146,11 +162,11 @@ fun ProfileScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Save,
-                                contentDescription = "Guardar nombre"
+                                contentDescription = stringResource(R.string.save_username)
                             )
                             Text(
                                 modifier = Modifier.padding(start = 8.dp),
-                                text = "Guardar nombre"
+                                text = stringResource(R.string.save_username)
                             )
                         }
                     } else {
@@ -166,7 +182,7 @@ fun ProfileScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Toca tu nombre para cambiarlo",
+                            text = stringResource(R.string.tap_name_to_change),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -204,7 +220,7 @@ fun ProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Seguridad",
+                        text = stringResource(R.string.security),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -220,11 +236,11 @@ fun ProfileScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Key,
-                            contentDescription = "Ir a cambiar contraseña"
+                            contentDescription = stringResource(R.string.go_to_change_password)
                         )
                         Text(
                             modifier = Modifier.padding(start = 8.dp),
-                            text = "Cambiar contraseña"
+                            text = stringResource(R.string.change_password)
                         )
                     }
                 }
@@ -240,25 +256,17 @@ fun ProfileScreen(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
-                    contentDescription = "Configuracion"
+                    contentDescription = stringResource(R.string.settings)
                 )
                 Text(
                     modifier = Modifier.padding(start = 8.dp),
-                    text = "Configuracion"
+                    text = stringResource(R.string.settings)
                 )
             }
 
             OutlinedButton(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    onLogout()
-                    navController.navigate(AppRoutes.Landing.route) {
-                        popUpTo(AppRoutes.Home.route) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
-                },
+                onClick = { showLogoutDialog = true },
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.error
@@ -266,14 +274,28 @@ fun ProfileScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
-                    contentDescription = "Cerrar sesion"
+                    contentDescription = stringResource(R.string.logout)
                 )
                 Text(
                     modifier = Modifier.padding(start = 8.dp),
-                    text = "Cerrar sesion"
+                    text = stringResource(R.string.logout)
                 )
             }
         }
+    }
+
+    if (showLogoutDialog) {
+        ConfirmationDialog(
+            title = stringResource(R.string.logout),
+            message = stringResource(R.string.logout_confirmation),
+            confirmText = stringResource(R.string.logout),
+            dismissText = stringResource(R.string.cancel),
+            onConfirm = {
+                showLogoutDialog = false
+                logoutAndNavigate()
+            },
+            onDismiss = { showLogoutDialog = false }
+        )
     }
 }
 
@@ -289,10 +311,10 @@ private fun profileTextFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
 )
 
-private fun String.initials(): String {
+private fun String.initials(fallback: String): String {
     val words = trim().split(" ").filter { it.isNotBlank() }
     return words
         .take(2)
         .joinToString("") { it.first().uppercase() }
-        .ifBlank { "U" }
+        .ifBlank { fallback }
 }

@@ -24,10 +24,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.viewmodel.AuthResult
 
 @Composable
@@ -40,6 +42,8 @@ fun PasswordChangeScreen(
     var confirmNewPassword by remember { mutableStateOf("") }
     var passwordMessage by remember { mutableStateOf<String?>(null) }
     var passwordIsError by remember { mutableStateOf(false) }
+    val passwordsDoNotMatchMessage = stringResource(R.string.new_passwords_do_not_match)
+    val passwordUpdatedMessage = stringResource(R.string.password_updated)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -53,13 +57,13 @@ fun PasswordChangeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Cambiar contraseña",
+                text = stringResource(R.string.change_password),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Actualiza tu contraseña en una pantalla segura.",
+                text = stringResource(R.string.change_password_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -71,7 +75,7 @@ fun PasswordChangeScreen(
                     currentPassword = it
                     passwordMessage = null
                 },
-                label = { Text("Contraseña actual") },
+                label = { Text(stringResource(R.string.current_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -88,7 +92,7 @@ fun PasswordChangeScreen(
                     newPassword = it
                     passwordMessage = null
                 },
-                label = { Text("Nueva contraseña") },
+                label = { Text(stringResource(R.string.new_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -105,7 +109,7 @@ fun PasswordChangeScreen(
                     confirmNewPassword = it
                     passwordMessage = null
                 },
-                label = { Text("Repetir nueva contraseña") },
+                label = { Text(stringResource(R.string.repeat_new_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -132,7 +136,7 @@ fun PasswordChangeScreen(
                 onClick = {
                     if (newPassword != confirmNewPassword) {
                         passwordIsError = true
-                        passwordMessage = "Las nuevas contrasenas no coinciden."
+                        passwordMessage = passwordsDoNotMatchMessage
                     } else {
                         when (val result = onPasswordChange(currentPassword, newPassword)) {
                             AuthResult.Success -> {
@@ -140,7 +144,7 @@ fun PasswordChangeScreen(
                                 newPassword = ""
                                 confirmNewPassword = ""
                                 passwordIsError = false
-                                passwordMessage = "Contrasena actualizada."
+                                passwordMessage = passwordUpdatedMessage
                             }
                             is AuthResult.Error -> {
                                 passwordIsError = true
@@ -157,11 +161,11 @@ fun PasswordChangeScreen(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Key,
-                    contentDescription = "Guardar contraseña"
+                    contentDescription = stringResource(R.string.save_password)
                 )
                 Text(
                     modifier = Modifier.padding(start = 8.dp),
-                    text = "Guardar contraseña"
+                    text = stringResource(R.string.save_password)
                 )
             }
 
@@ -169,7 +173,7 @@ fun PasswordChangeScreen(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Volver al perfil")
+                Text(stringResource(R.string.back_to_profile))
             }
         }
     }

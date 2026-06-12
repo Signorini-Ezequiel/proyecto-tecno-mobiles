@@ -28,11 +28,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
 import com.undef.superahorro.haronsignorini.viewmodel.AuthResult
 
@@ -75,13 +77,13 @@ fun RegisterScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "Registro",
+                            text = stringResource(R.string.register_title),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Crea una cuenta para empezar a ahorrar.",
+                            text = stringResource(R.string.register_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -90,10 +92,10 @@ fun RegisterScreen(
                     AuthTextField(
                         value = username,
                         onValueChange = { username = it },
-                        label = "Nombre de usuario",
-                        placeholder = "Ej: Matias",
+                        label = stringResource(R.string.username),
+                        placeholder = stringResource(R.string.username_placeholder),
                         isError = usernameHasError,
-                        supportingText = if (usernameHasError) "Minimo 3 caracteres" else null,
+                        supportingText = if (usernameHasError) stringResource(R.string.minimum_3_chars) else null,
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Filled.AccountCircle,
@@ -105,10 +107,10 @@ fun RegisterScreen(
                     AuthTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = "Email",
-                        placeholder = "tu@email.com",
+                        label = stringResource(R.string.email),
+                        placeholder = stringResource(R.string.email_placeholder),
                         isError = emailHasError,
-                        supportingText = if (emailHasError) "Ingresa un email valido" else null,
+                        supportingText = if (emailHasError) stringResource(R.string.invalid_email) else null,
                         keyboardType = KeyboardType.Email,
                         leadingIcon = {
                             Icon(
@@ -121,10 +123,10 @@ fun RegisterScreen(
                     AuthTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = "Password",
-                        placeholder = "Crea un password",
+                        label = stringResource(R.string.password),
+                        placeholder = stringResource(R.string.create_password_placeholder),
                         isError = passwordHasError,
-                        supportingText = if (passwordHasError) "Minimo 6 caracteres" else null,
+                        supportingText = if (passwordHasError) stringResource(R.string.minimum_6_chars) else null,
                         keyboardType = KeyboardType.Password,
                         visualTransformation = PasswordVisualTransformation(),
                         leadingIcon = {
@@ -171,7 +173,7 @@ fun RegisterScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text("Crear cuenta")
+                        Text(stringResource(R.string.create_account))
                     }
 
                     OutlinedButton(
@@ -182,7 +184,7 @@ fun RegisterScreen(
                             contentColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Ya tengo cuenta")
+                        Text(stringResource(R.string.already_have_account))
                     }
                 }
             }
