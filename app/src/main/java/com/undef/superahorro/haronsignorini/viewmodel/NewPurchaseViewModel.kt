@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.undef.superahorro.haronsignorini.data.Product
 import com.undef.superahorro.haronsignorini.data.Purchase
+import com.undef.superahorro.haronsignorini.data.SessionManager
 import com.undef.superahorro.haronsignorini.util.persistTicketImageUri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -22,6 +23,7 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class NewPurchaseViewModel @Inject constructor(
     private val repository: PurchaseRepository,
+    private val sessionManager: SessionManager,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
     private var editingPurchaseId: Int? = null
@@ -111,6 +113,7 @@ class NewPurchaseViewModel @Inject constructor(
         val purchaseId = editingPurchaseId
         val purchase = Purchase(
             id = purchaseId ?: 0,
+            userEmail = sessionManager.getLoggedInEmail().orEmpty(),
             marketName = _newPurchaseMarket.value,
             date = _newPurchaseDate.value,
             time = editingPurchaseTime ?: currentPurchaseTime(),

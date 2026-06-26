@@ -1,6 +1,9 @@
 package com.undef.superahorro.haronsignorini.data
 
 import android.content.Context
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class SessionManager(context: Context) {
     private val preferences = context.getSharedPreferences(
@@ -8,8 +11,12 @@ class SessionManager(context: Context) {
         Context.MODE_PRIVATE
     )
 
+    private val _currentEmail = MutableStateFlow<String?>(null)
+    val currentEmailFlow: StateFlow<String?> = _currentEmail.asStateFlow()
+
     init {
         ensureDefaultAccounts()
+        _currentEmail.value = getLoggedInEmail()
     }
 
     fun isLoggedIn(): Boolean {
@@ -21,6 +28,7 @@ class SessionManager(context: Context) {
             .putBoolean(KEY_IS_LOGGED_IN, true)
             .putString(KEY_EMAIL, email)
             .apply()
+        _currentEmail.value = email
     }
 
     fun clearSession() {
@@ -28,11 +36,18 @@ class SessionManager(context: Context) {
             .putBoolean(KEY_IS_LOGGED_IN, false)
             .remove(KEY_EMAIL)
             .apply()
+        _currentEmail.value = null
     }
 
     fun getEmail(): String {
-        return preferences.getString(KEY_EMAIL, "invitado@superahorro.app")
-            ?: "invitado@superahorro.app"
+        return getLoggedInEmail() ?: "invitado@superahorro.app"
+    }
+
+    fun getLoggedInEmail(): String? {
+        if (!isLoggedIn()) {
+            return null
+        }
+        return preferences.getString(KEY_EMAIL, null)
     }
 
     fun getCurrentAccount(): MockAccount? {

@@ -6,6 +6,7 @@ import com.undef.superahorro.haronsignorini.data.Purchase
 fun PurchaseWithProducts.toDomain(): Purchase {
     return Purchase(
         id = purchase.id,
+        userEmail = purchase.userEmail,
         marketName = purchase.marketName,
         date = purchase.date,
         time = purchase.time,
@@ -30,6 +31,7 @@ fun ProductEntity.toDomain(): Product {
 fun Purchase.toEntity(id: Int = this.id): PurchaseEntity {
     return PurchaseEntity(
         id = id,
+        userEmail = userEmail,
         marketName = marketName,
         date = date,
         time = time,

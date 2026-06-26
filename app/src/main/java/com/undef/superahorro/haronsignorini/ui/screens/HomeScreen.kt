@@ -37,6 +37,7 @@ import com.undef.superahorro.haronsignorini.viewmodel.PurchaseListViewModel
 @Composable
 fun HomeScreen(
     navController: NavController,
+    username: String,
     purchaseViewModel: PurchaseListViewModel = hiltViewModel()
 ) {
     val purchases by purchaseViewModel.purchases.collectAsStateWithLifecycle()
@@ -75,7 +76,7 @@ fun HomeScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = stringResource(R.string.hello_user),
+                        text = stringResource(R.string.hello_user, username),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground

@@ -2,26 +2,45 @@ package com.undef.superahorro.haronsignorini.viewmodel
 
 import com.undef.superahorro.haronsignorini.data.Product
 import com.undef.superahorro.haronsignorini.data.Purchase
+import com.undef.superahorro.haronsignorini.data.SessionManager
 import com.undef.superahorro.haronsignorini.data.local.PurchaseDao
 import com.undef.superahorro.haronsignorini.data.local.toDomain
 import com.undef.superahorro.haronsignorini.data.local.toEntity
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 @Singleton
+@OptIn(ExperimentalCoroutinesApi::class)
 class PurchaseRepository @Inject constructor(
-    private val purchaseDao: PurchaseDao
+    private val purchaseDao: PurchaseDao,
+    private val sessionManager: SessionManager
 ) {
-    val purchases: Flow<List<Purchase>> = purchaseDao.getPurchases()
-        .map { purchasesWithProducts ->
-            purchasesWithProducts.map { it.toDomain() }
+    val purchases: Flow<List<Purchase>> = sessionManager.currentEmailFlow.flatMapLatest { userEmail ->
+        if (userEmail.isNullOrBlank()) {
+            flowOf(emptyList())
+        } else {
+            flow {
+                purchaseDao.claimUnassignedPurchases(userEmail)
+                emitAll(
+                    purchaseDao.getPurchasesByUser(userEmail).map { purchasesWithProducts ->
+                        purchasesWithProducts.map { it.toDomain() }
+                    }
+                )
+            }
         }
+    }
 
     suspend fun getPurchaseByIdFromDatabase(id: Int): Purchase? {
-        return purchaseDao.getPurchaseById(id).first()?.toDomain()
+        val userEmail = sessionManager.getLoggedInEmail() ?: return null
+        return purchaseDao.getPurchaseById(id, userEmail).first()?.toDomain()
     }
 
     suspend fun getProductsForPurchase(purchaseId: Int): List<Product> {
@@ -29,7 +48,10 @@ class PurchaseRepository @Inject constructor(
     }
 
     suspend fun addPurchase(purchase: Purchase): Int {
-        val purchaseId = purchaseDao.insertPurchase(purchase.toEntity(id = 0)).toInt()
+        val userEmail = sessionManager.getLoggedInEmail() ?: return 0
+        val purchaseId = purchaseDao.insertPurchase(
+            purchase.copy(userEmail = userEmail).toEntity(id = 0)
+        ).toInt()
         purchaseDao.insertProducts(
             purchase.products.map { product ->
                 product.toEntity(purchaseId = purchaseId, keepId = false)
@@ -43,11 +65,12 @@ class PurchaseRepository @Inject constructor(
     }
 
     suspend fun updatePurchase(purchase: Purchase) {
+        val userEmail = sessionManager.getLoggedInEmail() ?: return
         val products = purchase.products.map { product ->
             product.toEntity(purchaseId = purchase.id, keepId = false)
         }
         purchaseDao.replacePurchaseWithProducts(
-            purchase = purchase.toEntity(),
+            purchase = purchase.copy(userEmail = userEmail).toEntity(),
             products = products
         )
     }
@@ -57,11 +80,13 @@ class PurchaseRepository @Inject constructor(
     }
 
     suspend fun deletePurchase(purchase: Purchase) {
-        purchaseDao.deletePurchase(purchase.toEntity())
+        val userEmail = sessionManager.getLoggedInEmail() ?: return
+        purchaseDao.deletePurchase(purchase.copy(userEmail = userEmail).toEntity())
     }
 
     suspend fun deletePurchaseById(purchaseId: Int) {
-        purchaseDao.deletePurchaseById(purchaseId)
+        val userEmail = sessionManager.getLoggedInEmail() ?: return
+        purchaseDao.deletePurchaseByIdForUser(purchaseId, userEmail)
     }
 
     suspend fun deleteProduct(product: Product, purchaseId: Int) {

@@ -95,6 +95,7 @@ fun AppNavigation(
             composable(AppRoutes.Home.route) {
                 HomeScreen(
                     navController = navController,
+                    username = authViewModel.username,
                     purchaseViewModel = purchaseListViewModel
                 )
             }

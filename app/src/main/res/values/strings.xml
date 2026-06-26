@@ -43,7 +43,7 @@
     <string name="register_button">Registrarse</string>
     <string name="already_have_account">Ya tengo cuenta</string>
     <string name="splash_tagline">Tus compras, más claras.</string>
-    <string name="hello_user">Hola, Matias</string>
+    <string name="hello_user">Hola, %1$s</string>
     <string name="home_subtitle">Este es tu resumen de supermercado.</string>
     <string name="add_purchase">Agregar compra</string>
     <string name="purchase_fab">Compra</string>

@@ -2,6 +2,7 @@ package com.undef.superahorro.haronsignorini.di
 
 import android.content.Context
 import androidx.room.Room
+import com.undef.superahorro.haronsignorini.data.SessionManager
 import com.undef.superahorro.haronsignorini.data.local.PurchaseDao
 import com.undef.superahorro.haronsignorini.data.local.SuperAhorroDatabase
 import com.undef.superahorro.haronsignorini.data.remote.ApiService
@@ -28,7 +29,14 @@ object AppModule {
             "super_ahorro.db"
         )
             .addMigrations(SuperAhorroDatabase.MIGRATION_1_2)
+            .addMigrations(SuperAhorroDatabase.MIGRATION_2_3)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSessionManager(@ApplicationContext context: Context): SessionManager {
+        return SessionManager(context)
     }
 
     @Provides

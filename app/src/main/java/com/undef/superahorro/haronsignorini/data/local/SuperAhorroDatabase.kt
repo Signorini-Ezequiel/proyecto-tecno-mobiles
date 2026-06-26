@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PurchaseEntity::class,
         ProductEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class SuperAhorroDatabase : RoomDatabase() {
@@ -22,6 +22,12 @@ abstract class SuperAhorroDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE purchases ADD COLUMN time TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE products ADD COLUMN code TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE products ADD COLUMN description TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE purchases ADD COLUMN userEmail TEXT NOT NULL DEFAULT ''")
             }
         }
     }

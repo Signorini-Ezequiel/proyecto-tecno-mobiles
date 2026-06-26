@@ -37,13 +37,13 @@
     <string name="register_title">Register</string>
     <string name="register_subtitle">Create an account to start saving.</string>
     <string name="username">Username</string>
-    <string name="username_placeholder">Ex: Matias</string>
+    <string name="username_placeholder">Ej: Lucas</string>
     <string name="create_password_placeholder">Create a password</string>
     <string name="create_account">Create account</string>
     <string name="register_button">Register</string>
     <string name="already_have_account">I already have an account</string>
     <string name="splash_tagline">Your purchases, clearer.</string>
-    <string name="hello_user">Hi, Matias</string>
+    <string name="hello_user">Hi, %1$s</string>
     <string name="home_subtitle">This is your grocery summary.</string>
     <string name="add_purchase">Add purchase</string>
     <string name="purchase_fab">Purchase</string>

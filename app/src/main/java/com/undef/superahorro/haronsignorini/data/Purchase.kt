@@ -2,6 +2,7 @@ package com.undef.superahorro.haronsignorini.data
 
 data class Purchase(
     val id: Int,
+    val userEmail: String = "",
     val marketName: String,
     val date: String,
     val time: String = "",

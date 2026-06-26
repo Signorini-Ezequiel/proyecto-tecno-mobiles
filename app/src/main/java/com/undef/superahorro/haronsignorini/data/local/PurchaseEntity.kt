@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class PurchaseEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    val userEmail: String,
     val marketName: String,
     val date: String,
     val time: String = "",

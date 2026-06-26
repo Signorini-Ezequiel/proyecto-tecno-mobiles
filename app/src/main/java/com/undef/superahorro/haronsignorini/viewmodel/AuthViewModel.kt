@@ -12,8 +12,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class AuthViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
-    private val sessionManager = SessionManager(application)
+class AuthViewModel @Inject constructor(
+    application: Application,
+    private val sessionManager: SessionManager
+) : AndroidViewModel(application) {
 
     var isLoggedIn by mutableStateOf(sessionManager.isLoggedIn())
         private set
