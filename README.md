@@ -59,7 +59,11 @@ Para generar APK debug:
 gradlew.bat :app:assembleDebug
 ```
 
-El APK debug generado se encuentra en `app/build/outputs/apk/debug/app-debug.apk`.
+El APK debug generado por Gradle se encuentra en `app/build/outputs/apk/debug/app-debug.apk`.
+
+Además, el repositorio incluye una copia lista para instalar en la raíz del proyecto:
+
+- `SuperAhorro-debug.apk`
 
 ## Estructura de carpetas
 
@@ -82,9 +86,12 @@ app/src/main/res
 
 ## Capturas y demo
 
-- Capturas: [docs/screenshots.md](docs/screenshots.md)
-- Demo: [docs/demo-video.md](docs/demo-video.md)
-- APK debug: `app/build/outputs/apk/debug/app-debug.apk`
+- Capturas de referencia / demo: [docs/screenshots.md](docs/screenshots.md)
+- Video o GIF de referencia / demo: [docs/demo-video.md](docs/demo-video.md)
+- APK debug listo para usar en la raíz del proyecto: `SuperAhorro-debug.apk`
+- APK debug generado por Gradle: `app/build/outputs/apk/debug/app-debug.apk`
+
+Las capturas y el material audiovisual se consideran material de demo para mostrar el flujo principal de la app. No forman parte de la lógica de negocio ni de la persistencia del sistema.
 
 ## Funcionalidades implementadas
 
