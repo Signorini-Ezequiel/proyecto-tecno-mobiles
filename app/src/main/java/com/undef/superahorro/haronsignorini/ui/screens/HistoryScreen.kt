@@ -18,9 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
@@ -32,9 +32,9 @@ import com.undef.superahorro.haronsignorini.viewmodel.PurchaseListViewModel
 @Composable
 fun HistoryScreen(
     navController: NavController,
-    purchaseViewModel: PurchaseListViewModel = viewModel()
+    purchaseViewModel: PurchaseListViewModel = hiltViewModel()
 ) {
-    val purchases by purchaseViewModel.purchases.collectAsState()
+    val purchases by purchaseViewModel.purchases.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val groupedPurchases = purchases
         .sortedByDescending { it.sortKey() }

@@ -5,7 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -36,9 +36,9 @@ fun AppNavigation(
     onDarkModeChange: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
-    val purchaseListViewModel: PurchaseListViewModel = viewModel()
-    val newPurchaseViewModel: NewPurchaseViewModel = viewModel()
-    val authViewModel: AuthViewModel = viewModel()
+    val purchaseListViewModel: PurchaseListViewModel = hiltViewModel()
+    val newPurchaseViewModel: NewPurchaseViewModel = hiltViewModel()
+    val authViewModel: AuthViewModel = hiltViewModel()
     val backStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry.value?.destination?.route
     val showBottomBar = currentRoute !in listOf(

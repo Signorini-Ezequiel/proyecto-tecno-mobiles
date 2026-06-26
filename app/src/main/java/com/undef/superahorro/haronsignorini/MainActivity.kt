@@ -6,16 +6,18 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.SideEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.undef.superahorro.haronsignorini.navigation.AppNavigation
 import com.undef.superahorro.haronsignorini.ui.theme.SuperAhorroTheme
 import com.undef.superahorro.haronsignorini.viewmodel.SettingsViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val settingsViewModel: SettingsViewModel = viewModel()
+            val settingsViewModel: SettingsViewModel = hiltViewModel()
             val isDarkModeEnabled = settingsViewModel.isDarkModeEnabled
 
             SideEffect {

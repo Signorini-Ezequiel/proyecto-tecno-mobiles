@@ -1,14 +1,17 @@
 package com.undef.superahorro.haronsignorini.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.undef.superahorro.haronsignorini.data.Product
 import com.undef.superahorro.haronsignorini.data.Purchase
 import com.undef.superahorro.haronsignorini.util.persistTicketImageUri
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,8 +19,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class NewPurchaseViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class NewPurchaseViewModel @Inject constructor(
+    private val repository: PurchaseRepository,
+    @ApplicationContext private val appContext: Context
+) : ViewModel() {
     private var editingPurchaseId: Int? = null
+    private var editingPurchaseTime: String? = null
     private val _newPurchaseMarket = MutableStateFlow("")
     val newPurchaseMarket: StateFlow<String> = _newPurchaseMarket.asStateFlow()
     private val _newPurchaseDate = MutableStateFlow("")
@@ -30,10 +38,6 @@ class NewPurchaseViewModel(application: Application) : AndroidViewModel(applicat
     val ticketUri: StateFlow<String?> = _ticketUri.asStateFlow()
     private val _pendingCameraTicketUri = MutableStateFlow<String?>(null)
     val pendingCameraTicketUri: StateFlow<String?> = _pendingCameraTicketUri.asStateFlow()
-
-    init {
-        PurchaseRepository.initialize(application, viewModelScope)
-    }
 
     fun setNewPurchaseDetails(marketName: String, date: String) {
         _newPurchaseMarket.value = marketName
@@ -48,6 +52,7 @@ class NewPurchaseViewModel(application: Application) : AndroidViewModel(applicat
 
     fun loadPurchaseDraft(purchase: Purchase) {
         editingPurchaseId = purchase.id
+        editingPurchaseTime = purchase.time
         _newPurchaseMarket.value = purchase.marketName
         _newPurchaseDate.value = purchase.date
         _newPurchaseProducts.value = purchase.products
@@ -108,8 +113,7 @@ class NewPurchaseViewModel(application: Application) : AndroidViewModel(applicat
             id = purchaseId ?: 0,
             marketName = _newPurchaseMarket.value,
             date = _newPurchaseDate.value,
-            time = purchaseId?.let { PurchaseRepository.getPurchaseById(it)?.time }
-                ?: currentPurchaseTime(),
+            time = editingPurchaseTime ?: currentPurchaseTime(),
             total = getNewPurchaseTotal(),
             productsCount = _newPurchaseProducts.value.size,
             products = _newPurchaseProducts.value,
@@ -117,9 +121,9 @@ class NewPurchaseViewModel(application: Application) : AndroidViewModel(applicat
         )
         viewModelScope.launch {
             if (purchaseId == null) {
-                PurchaseRepository.addPurchase(purchase)
+                repository.addPurchase(purchase)
             } else {
-                PurchaseRepository.updatePurchase(purchase)
+                repository.updatePurchase(purchase)
             }
         }
         clearNewPurchase()
@@ -130,7 +134,7 @@ class NewPurchaseViewModel(application: Application) : AndroidViewModel(applicat
         val purchaseId = editingPurchaseId
         viewModelScope.launch {
             if (purchaseId != null) {
-                PurchaseRepository.deletePurchaseById(purchaseId)
+                repository.deletePurchaseById(purchaseId)
             }
             clearNewPurchase()
         }
@@ -138,6 +142,7 @@ class NewPurchaseViewModel(application: Application) : AndroidViewModel(applicat
 
     fun clearNewPurchase() {
         editingPurchaseId = null
+        editingPurchaseTime = null
         _newPurchaseMarket.value = ""
         _newPurchaseDate.value = ""
         _newPurchaseProducts.value = emptyList()
@@ -150,7 +155,7 @@ class NewPurchaseViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             _ticketUri.value = uri?.let {
                 withContext(Dispatchers.IO) {
-                    persistTicketImageUri(getApplication(), it)
+                    persistTicketImageUri(appContext, it)
                 }
             }
             _pendingCameraTicketUri.value = null

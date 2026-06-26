@@ -8,8 +8,11 @@ import androidx.lifecycle.AndroidViewModel
 import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.MockAccount
 import com.undef.superahorro.haronsignorini.data.SessionManager
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class AuthViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
     private val sessionManager = SessionManager(application)
 
     var isLoggedIn by mutableStateOf(sessionManager.isLoggedIn())

@@ -1,6 +1,8 @@
 # Demo video
 
-Agregar un GIF o video corto antes de la entrega final.
+## Archivo esperado
+
+- `docs/demo/superahorro-demo.gif` o `docs/demo/superahorro-demo.mp4`
 
 ## Guion sugerido
 
@@ -9,15 +11,11 @@ Agregar un GIF o video corto antes de la entrega final.
 3. Ver resumen en Home.
 4. Crear una nueva compra.
 5. Agregar uno o dos productos.
-6. Guardar la compra.
-7. Abrir detalle, historial y estadísticas.
-8. Mostrar perfil y configuración de modo oscuro.
+6. Adjuntar o tomar foto del ticket.
+7. Guardar la compra.
+8. Abrir detalle, historial y estadísticas.
+9. Mostrar perfil y configuración de modo oscuro.
 
-## Placeholders
+## Estado actual
 
-```md
-![Demo GIF](demo/superahorro-demo.gif)
-
-[Video demo](demo/superahorro-demo.mp4)
-```
-
+No hay GIF o video real versionado en el repositorio todavía. El APK debug disponible para grabar la demo está en `app/build/outputs/apk/debug/app-debug.apk`.

@@ -3,9 +3,12 @@ package com.undef.superahorro.haronsignorini.data.remote
 import com.undef.superahorro.haronsignorini.data.Purchase
 import com.undef.superahorro.haronsignorini.data.remote.dto.PurchaseSyncRequest
 import com.undef.superahorro.haronsignorini.data.remote.dto.PurchaseSyncResponse
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PurchaseSyncRepository(
-    private val apiService: ApiService = RetrofitClient.apiService
+@Singleton
+class PurchaseSyncRepository @Inject constructor(
+    private val apiService: ApiService
 ) {
     suspend fun syncPurchase(purchase: Purchase): PurchaseSyncResponse {
         val remoteUser = apiService.getUsers().firstOrNull()

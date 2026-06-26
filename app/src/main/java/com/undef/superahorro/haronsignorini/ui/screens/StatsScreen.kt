@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.viewmodel.PurchaseListViewModel
 import java.text.SimpleDateFormat
@@ -55,8 +55,8 @@ import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun StatsScreen(purchaseViewModel: PurchaseListViewModel = viewModel()) {
-    val purchases by purchaseViewModel.purchases.collectAsState()
+fun StatsScreen(purchaseViewModel: PurchaseListViewModel = hiltViewModel()) {
+    val purchases by purchaseViewModel.purchases.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val availableMonths = purchases
         .mapNotNull { it.date.toMonthBucketOrNull() }

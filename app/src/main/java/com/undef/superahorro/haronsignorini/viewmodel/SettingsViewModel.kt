@@ -6,8 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import com.undef.superahorro.haronsignorini.data.SessionManager
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class SettingsViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
     private val sessionManager = SessionManager(application)
 
     var isDarkModeEnabled by mutableStateOf(sessionManager.isDarkModeEnabled())

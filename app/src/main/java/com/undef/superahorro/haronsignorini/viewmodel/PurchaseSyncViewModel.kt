@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.undef.superahorro.haronsignorini.data.Purchase
 import com.undef.superahorro.haronsignorini.data.remote.PurchaseSyncRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,8 +18,9 @@ sealed interface PurchaseSyncUiState {
     data object Error : PurchaseSyncUiState
 }
 
-class PurchaseSyncViewModel(
-    private val repository: PurchaseSyncRepository = PurchaseSyncRepository()
+@HiltViewModel
+class PurchaseSyncViewModel @Inject constructor(
+    private val repository: PurchaseSyncRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<PurchaseSyncUiState>(PurchaseSyncUiState.Idle)
     val uiState: StateFlow<PurchaseSyncUiState> = _uiState.asStateFlow()

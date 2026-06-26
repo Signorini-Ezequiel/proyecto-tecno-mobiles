@@ -35,7 +35,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +44,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.Purchase
@@ -64,10 +64,10 @@ fun NewPurchaseScreen(
     navController: NavController,
     purchase: Purchase? = null,
     isEditing: Boolean = false,
-    newPurchaseViewModel: NewPurchaseViewModel = viewModel()
+    newPurchaseViewModel: NewPurchaseViewModel = hiltViewModel()
 ) {
-    val marketName by newPurchaseViewModel.newPurchaseMarket.collectAsState()
-    val date by newPurchaseViewModel.newPurchaseDate.collectAsState()
+    val marketName by newPurchaseViewModel.newPurchaseMarket.collectAsStateWithLifecycle()
+    val date by newPurchaseViewModel.newPurchaseDate.collectAsStateWithLifecycle()
     var showValidation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }

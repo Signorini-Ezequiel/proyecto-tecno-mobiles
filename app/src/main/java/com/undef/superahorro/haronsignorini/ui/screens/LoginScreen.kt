@@ -1,4 +1,4 @@
-package com.undef.superahorro.haronsignorini.ui.screens
+﻿package com.undef.superahorro.haronsignorini.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,21 +7,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,10 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.undef.superahorro.haronsignorini.R
 import com.undef.superahorro.haronsignorini.data.MockAccount
 import com.undef.superahorro.haronsignorini.navigation.AppRoutes
 import com.undef.superahorro.haronsignorini.viewmodel.AuthResult
@@ -86,13 +81,13 @@ fun LoginScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = stringResource(R.string.login_title),
+                            text = stringResource(LoginStringIds.loginTitle),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = stringResource(R.string.login_subtitle),
+                            text = stringResource(LoginStringIds.loginSubtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -101,10 +96,10 @@ fun LoginScreen(
                     AuthTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = stringResource(R.string.email),
-                        placeholder = stringResource(R.string.email_placeholder),
+                        label = stringResource(LoginStringIds.email),
+                        placeholder = stringResource(LoginStringIds.emailPlaceholder),
                         isError = emailHasError,
-                        supportingText = if (emailHasError) stringResource(R.string.invalid_email) else null,
+                        supportingText = if (emailHasError) stringResource(LoginStringIds.invalidEmail) else null,
                         keyboardType = KeyboardType.Email,
                         leadingIcon = {
                             Icon(
@@ -117,10 +112,10 @@ fun LoginScreen(
                     AuthTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = stringResource(R.string.password),
-                        placeholder = stringResource(R.string.password_placeholder),
+                        label = stringResource(LoginStringIds.password),
+                        placeholder = stringResource(LoginStringIds.passwordPlaceholder),
                         isError = passwordHasError,
-                        supportingText = if (passwordHasError) stringResource(R.string.minimum_6_chars) else null,
+                        supportingText = if (passwordHasError) stringResource(LoginStringIds.minimum6Chars) else null,
                         keyboardType = KeyboardType.Password,
                         visualTransformation = PasswordVisualTransformation(),
                         leadingIcon = {
@@ -165,12 +160,12 @@ fun LoginScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text(stringResource(R.string.login_button))
+                        Text(stringResource(LoginStringIds.loginButton))
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = stringResource(R.string.login_quick_accounts),
+                            text = stringResource(LoginStringIds.loginQuickAccounts),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -189,7 +184,7 @@ fun LoginScreen(
                                     contentColor = MaterialTheme.colorScheme.primary
                                 )
                             ) {
-                                Text(stringResource(R.string.login_as, account.email))
+                                Text(stringResource(LoginStringIds.loginAs, account.email))
                             }
                         }
                     }
@@ -202,7 +197,7 @@ fun LoginScreen(
                             contentColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text(stringResource(R.string.go_to_register))
+                        Text(stringResource(LoginStringIds.goToRegister))
                     }
 
                     TextButton(
@@ -212,7 +207,7 @@ fun LoginScreen(
                             showRecoveryDialog = true
                         }
                     ) {
-                        Text(stringResource(R.string.forgot_password))
+                        Text(stringResource(LoginStringIds.forgotPassword))
                     }
                 }
             }
@@ -243,19 +238,19 @@ private fun PasswordRecoveryDialog(
     var newPassword by remember { mutableStateOf("") }
     var repeatedPassword by remember { mutableStateOf("") }
     var recoveryError by remember { mutableStateOf<String?>(null) }
-    val successMessage = stringResource(R.string.password_recovery_success)
-    val newPasswordsDoNotMatch = stringResource(R.string.new_passwords_do_not_match)
+    val successMessage = stringResource(LoginStringIds.passwordRecoverySuccess)
+    val newPasswordsDoNotMatch = stringResource(LoginStringIds.newPasswordsDoNotMatch)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.recover_password)) },
+        title = { Text(stringResource(LoginStringIds.recoverPassword)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 AuthTextField(
                     value = recoveryEmail,
                     onValueChange = { recoveryEmail = it },
-                    label = stringResource(R.string.email),
-                    placeholder = stringResource(R.string.email_placeholder),
+                    label = stringResource(LoginStringIds.email),
+                    placeholder = stringResource(LoginStringIds.emailPlaceholder),
                     isError = false,
                     supportingText = null,
                     keyboardType = KeyboardType.Email
@@ -263,8 +258,8 @@ private fun PasswordRecoveryDialog(
                 AuthTextField(
                     value = newPassword,
                     onValueChange = { newPassword = it },
-                    label = stringResource(R.string.new_password),
-                    placeholder = stringResource(R.string.create_password_placeholder),
+                    label = stringResource(LoginStringIds.newPassword),
+                    placeholder = stringResource(LoginStringIds.createPasswordPlaceholder),
                     isError = false,
                     supportingText = null,
                     keyboardType = KeyboardType.Password,
@@ -273,8 +268,8 @@ private fun PasswordRecoveryDialog(
                 AuthTextField(
                     value = repeatedPassword,
                     onValueChange = { repeatedPassword = it },
-                    label = stringResource(R.string.repeat_new_password),
-                    placeholder = stringResource(R.string.create_password_placeholder),
+                    label = stringResource(LoginStringIds.repeatNewPassword),
+                    placeholder = stringResource(LoginStringIds.createPasswordPlaceholder),
                     isError = false,
                     supportingText = null,
                     keyboardType = KeyboardType.Password,
@@ -302,55 +297,14 @@ private fun PasswordRecoveryDialog(
                     }
                 }
             ) {
-                Text(stringResource(R.string.save_password))
+                Text(stringResource(LoginStringIds.savePassword))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(LoginStringIds.cancel))
             }
         }
-    )
-}
-
-@Composable
-fun AuthTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String,
-    isError: Boolean,
-    supportingText: String?,
-    modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    leadingIcon: @Composable (() -> Unit)? = null
-) {
-    OutlinedTextField(
-        modifier = modifier.fillMaxWidth(),
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = { Text(placeholder) },
-        singleLine = true,
-        isError = isError,
-        supportingText = supportingText?.let {
-            { Text(it) }
-        },
-        leadingIcon = leadingIcon,
-        visualTransformation = visualTransformation,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        shape = MaterialTheme.shapes.medium,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            cursorColor = MaterialTheme.colorScheme.primary,
-            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
     )
 }
 
